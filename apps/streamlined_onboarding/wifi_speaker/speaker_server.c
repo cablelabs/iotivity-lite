@@ -15,41 +15,6 @@
  limitations under the License.
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */
-
-/* Application Design
-*
-* support functions:
-* app_init
-*  initializes the oic/p and oic/d values.
-* register_resources
-*  function that registers all endpoints, e.g. sets the RETRIEVE/UPDATE handlers for each end point
-*
-* main
-*  starts the stack, with the registered resources.
-*
-* Each resource has:
-*  global property variables (per resource path) for:
-*    the property name
-*       naming convention: g_<path>_RESOURCE_PROPERTY_NAME_<propertyname>
-*    the actual value of the property, which is typed from the json data type
-*      naming convention: g_<path>_<propertyname>
-*  global resource variables (per path) for:
-*    the path in a variable:
-*      naming convention: g_<path>_RESOURCE_ENDPOINT
-*    array of interfaces, where by the first will be set as default interface
-*      naming convention g_<path>_RESOURCE_INTERFACE
-*
-*  handlers for the implemented methods (get/post)
-*   get_<path>
-*     function that is being called when a RETRIEVE is called on <path>
-*     set the global variables in the output
-*   post_<path>
-*     function that is being called when a UPDATE is called on <path>
-*     checks the input data
-*     if input data is correct
-*       updates the global variables
-*
-*/
 /*
  tool_version          : 20200103
  input_file            : ./output//out_codegeneration_merged.swagger.json
@@ -61,23 +26,11 @@
 #include "oc_core_res.h"
 #include "port/oc_clock.h"
 #include <signal.h>
-
-#ifdef __linux__
-/* linux specific code */
 #include <pthread.h>
-#ifndef NO_MAIN
+
 static pthread_mutex_t mutex;
 static pthread_cond_t cv;
 static struct timespec ts;
-#endif /* NO_MAIN */
-#endif
-
-#ifdef WIN32
-/* windows specific code */
-#include <windows.h>
-static CONDITION_VARIABLE cv;   /* event loop variable */
-static CRITICAL_SECTION cs;     /* event loop variable */
-#endif
 
 #define btoa(x) ((x)?"true":"false")
 
@@ -473,21 +426,6 @@ initialize_variables(void)
 
 }
 
-#ifndef NO_MAIN
-
-#ifdef WIN32
-/**
-* signal the event loop (windows version)
-* wakes up the main function to handle the next callback
-*/
-static void
-signal_event_loop(void)
-{
-  WakeConditionVariable(&cv);
-}
-#endif /* WIN32 */
-
-#ifdef __linux__
 /**
 * signal the event loop (Linux)
 * wakes up the main function to handle the next callback
@@ -499,7 +437,6 @@ signal_event_loop(void)
   pthread_cond_signal(&cv);
   pthread_mutex_unlock(&mutex);
 }
-#endif /* __linux__ */
 
 /**
 * handle Ctrl-C
@@ -534,14 +471,6 @@ main(void)
 int init;
   oc_clock_time_t next_event;
 
-#ifdef WIN32
-  /* windows specific */
-  InitializeCriticalSection(&cs);
-  InitializeConditionVariable(&cv);
-  /* install Ctrl-C */
-  signal(SIGINT, handle_signal);
-#endif
-#ifdef __linux__
   /* linux specific */
   struct sigaction sa;
   sigfillset(&sa.sa_mask);
@@ -549,7 +478,6 @@ int init;
   sa.sa_handler = handle_signal;
   /* install Ctrl-C */
   sigaction(SIGINT, &sa, NULL);
-#endif
 
   PRINT("Used input file : \"./output//out_codegeneration_merged.swagger.json\"\n");
   PRINT("OCF Server name : \"Speaker_Server\"\n");
@@ -595,23 +523,6 @@ int init;
   PRINT("OCF server \"Speaker_Server\" running, waiting on incoming connections.\n");
   display_device_uuid();
 
-#ifdef WIN32
-  /* windows specific loop */
-  while (quit != 1) {
-    next_event = oc_main_poll();
-    if (next_event == 0) {
-      SleepConditionVariableCS(&cv, &cs, INFINITE);
-    } else {
-      oc_clock_time_t now = oc_clock_time();
-      if (now < next_event) {
-        SleepConditionVariableCS(&cv, &cs,
-                                 (DWORD)((next_event-now) * 1000 / OC_CLOCK_SECOND));
-      }
-    }
-  }
-#endif
-
-#ifdef __linux__
   /* linux specific loop */
   while (quit != 1) {
     next_event = oc_main_poll();
@@ -625,10 +536,8 @@ int init;
     }
     pthread_mutex_unlock(&mutex);
   }
-#endif
 
   /* shut down the stack */
   oc_main_shutdown();
   return 0;
 }
-#endif /* NO_MAIN */
