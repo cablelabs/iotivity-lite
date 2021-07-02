@@ -447,13 +447,16 @@ client_multithread_linux: libiotivity-lite-client.a $(ROOT_DIR)/apps/client_mult
 	@mkdir -p $@_creds
 	${CC} -o $@ ../../apps/client_multithread_linux.c libiotivity-lite-client.a -DOC_CLIENT ${CFLAGS}  ${LIBS}
 
-speaker_server: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_server.c libiotivity-lite-server.a
-	@mkdir -p $@_creds
-	${CC} -o $@ $^ -DOC_SERVER ${CFLAGS}  ${LIBS}
+obj/ocf_dpp_supplicant.o: $(ROOT_DIR)/apps/streamlined_onboarding/ocf_dpp_supplicant.c $(ROOT_DIR)/apps/streamlined_onboarding/include/ocf_dpp_supplicant.h
+	${CC} -o $@ -c $< ${CFLAGS} ${LIBS}
 
-speaker_client: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_client.c libiotivity-lite-client.a
+speaker_server: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_server.c libiotivity-lite-server.a obj/ocf_dpp_supplicant.o
 	@mkdir -p $@_creds
-	${CC} -o $@ $^ -DOC_CLIENT ${CFLAGS}  ${LIBS}
+	${CC} -o $@ $^ -DOC_SERVER ${CFLAGS} -I$(ROOT_DIR)/apps/streamlined_onboarding/include/ ${LIBS}
+
+speaker_client: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_client.c libiotivity-lite-client.a obj/ocf_dpp_supplicant.o
+	@mkdir -p $@_creds
+	${CC} -o $@ $^ -DOC_CLIENT ${CFLAGS} -I$(ROOT_DIR)/apps/streamlined_onboarding/include/ ${LIBS}
 
 iotivity-lite-server.pc: iotivity-lite-server.pc.in
 	$(SED) > $@ < $< \

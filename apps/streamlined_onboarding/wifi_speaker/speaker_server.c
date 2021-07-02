@@ -25,6 +25,7 @@
 #include "oc_api.h"
 #include "oc_core_res.h"
 #include "port/oc_clock.h"
+#include "ocf_dpp_supplicant.h"
 #include <signal.h>
 #include <pthread.h>
 
@@ -521,6 +522,11 @@ int init;
   }
 
   PRINT("OCF server \"Speaker_Server\" running, waiting on incoming connections.\n");
+
+  /* Generate and provide streamlined onboarding info if in RFOTM */
+  if (dpp_so_info_init() < 0) {
+    OC_ERR("Failed to generate streamlined onboarding information");
+  }
   display_device_uuid();
 
   /* linux specific loop */
