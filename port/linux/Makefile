@@ -448,7 +448,7 @@ client_multithread_linux: libiotivity-lite-client.a $(ROOT_DIR)/apps/client_mult
 	${CC} -o $@ ../../apps/client_multithread_linux.c libiotivity-lite-client.a -DOC_CLIENT ${CFLAGS}  ${LIBS}
 
 obj/ocf_dpp_supplicant.o: $(ROOT_DIR)/apps/streamlined_onboarding/ocf_dpp_supplicant.c $(ROOT_DIR)/apps/streamlined_onboarding/include/ocf_dpp_supplicant.h
-	${CC} -o $@ -c $< ${CFLAGS} ${LIBS}
+	${CC} -o $@ -c $< ${CFLAGS} ${SECURITY_HEADERS} ${LIBS}
 
 speaker_server: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_server.c libiotivity-lite-server.a obj/ocf_dpp_supplicant.o
 	@mkdir -p $@_creds
