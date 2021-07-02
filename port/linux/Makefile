@@ -116,6 +116,9 @@ LIBS?= -lm -pthread -lrt
 SAMPLES = server client temp_sensor simpleserver simpleserver_pki simpleclient client_collections_linux introspectionclient\
 	  server_collections_linux server_block_linux client_block_linux server_certification_tests smart_home_server_linux multi_device_server multi_device_client smart_lock server_multithread_linux client_multithread_linux client_certification_tests server_rules secure_mcast_client secure_mcast_server1 secure_mcast_server2
 
+# DPP-baesd Streamlined Onboarding applications
+SO_DPP_SAMPLES = speaker_server speaker_client
+
 ifeq ($(V6DNS),1)
 	EXTRA_CFLAGS += -DOC_DNS_LOOKUP_IPV6
 endif
@@ -207,6 +210,11 @@ endif
 
 ifeq ($(JAVA),1)
 	SWIG = swig
+endif
+
+ifeq ($(SO_DPP),1)
+	SAMPLES += SO_DPP_SAMPLES
+	EXTRA_CFLAGS += -DOC_SO
 endif
 
 CFLAGS += $(EXTRA_CFLAGS)
@@ -438,6 +446,14 @@ server_multithread_linux: libiotivity-lite-server.a $(ROOT_DIR)/apps/server_mult
 client_multithread_linux: libiotivity-lite-client.a $(ROOT_DIR)/apps/client_multithread_linux.c
 	@mkdir -p $@_creds
 	${CC} -o $@ ../../apps/client_multithread_linux.c libiotivity-lite-client.a -DOC_CLIENT ${CFLAGS}  ${LIBS}
+
+speaker_server: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_server.c libiotivity-lite-server.a
+	@mkdir -p $@_creds
+	${CC} -o $@ $^ -DOC_SERVER ${CFLAGS}  ${LIBS}
+
+speaker_client: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_client.c libiotivity-lite-client.a
+	@mkdir -p $@_creds
+	${CC} -o $@ $^ -DOC_CLIENT ${CFLAGS}  ${LIBS}
 
 iotivity-lite-server.pc: iotivity-lite-server.pc.in
 	$(SED) > $@ < $< \
