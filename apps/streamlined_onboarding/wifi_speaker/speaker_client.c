@@ -1,6 +1,7 @@
 #include "oc_api.h"
 #include "oc_core_res.h"
 #include "port/oc_clock.h"
+#include "ocf_dpp_supplicant.h"
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
@@ -212,7 +213,7 @@ display_device_uuid(void)
 }
 
 int
-main(void)
+main(int argc, char *argv[])
 {
   int init;
   struct sigaction sa;
@@ -232,6 +233,12 @@ main(void)
   init = oc_main_init(&handler);
   if (init < 0)
     return init;
+
+  /* Generate and provide streamlined onboarding info if in RFOTM */
+  if (argc > 1 && dpp_so_info_init(argv[1]) < 0) {
+    OC_ERR("Failed to provide streamlined onboarding information to wpa_supplicant");
+  }
+
   display_device_uuid();
   if (pthread_create(&event_loop_thread, NULL, &ocf_event_thread, NULL) != 0) {
     return -1;
