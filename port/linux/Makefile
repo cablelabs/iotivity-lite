@@ -213,8 +213,9 @@ ifeq ($(JAVA),1)
 endif
 
 ifeq ($(SO_DPP),1)
-	SAMPLES += SO_DPP_SAMPLES
+	SAMPLES += $(SO_DPP_SAMPLES)
 	EXTRA_CFLAGS += -DOC_SO
+	LIBS += -lwpa_client
 endif
 
 CFLAGS += $(EXTRA_CFLAGS)

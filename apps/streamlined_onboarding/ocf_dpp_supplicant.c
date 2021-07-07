@@ -1,8 +1,32 @@
+#include <stdlib.h>
+#include <wpa_ctrl.h>
 #include "oc_api.h"
 #include "oc_core_res.h"
 #include "oc_pstat.h"
 #include "oc_base64.h"
 #include "oc_streamlined_onboarding.h"
+
+static char *ctrl_iface = NULL;
+
+static int
+send_so_info(oc_so_info_t *so_info)
+{
+  (void) so_info;
+  struct wpa_ctrl *ctrl = NULL;
+  if (!ctrl_iface) {
+    OC_ERR("wpa_supplicant control interface not specified");
+    return -1;
+  }
+  ctrl = wpa_ctrl_open(ctrl_iface);
+  if (ctrl == NULL) {
+    OC_ERR("Failed to open wpa_supplicant interface");
+    return -1;
+  }
+  OC_DBG("Opened wpa_supplicant control interface");
+
+  // TODO Send actual info
+  return 0;
+}
 
 /* TODO
  * Currently generates a simple, base64 encoded 16-byte PSK. Should be updated
@@ -41,5 +65,5 @@ dpp_so_info_init(void)
   OC_DBG("Generated streamlined onboarding PSK: %s\n", so_info.cred);
 
   // TODO: Send to Supplicant
-  return 0;
+  return send_so_info(&so_info);
 }

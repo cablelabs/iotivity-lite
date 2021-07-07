@@ -525,7 +525,7 @@ int init;
 
   /* Generate and provide streamlined onboarding info if in RFOTM */
   if (dpp_so_info_init() < 0) {
-    OC_ERR("Failed to generate streamlined onboarding information");
+    OC_ERR("Failed to provide streamlined onboarding information to wpa_supplicant");
   }
   display_device_uuid();
 
