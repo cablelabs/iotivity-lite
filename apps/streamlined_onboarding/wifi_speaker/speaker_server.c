@@ -467,9 +467,9 @@ display_device_uuid(void)
 * shuts down the stack
 */
 int
-main(void)
+main(int argc, char *argv[])
 {
-int init;
+  int init;
   oc_clock_time_t next_event;
 
   /* linux specific */
@@ -524,7 +524,7 @@ int init;
   PRINT("OCF server \"Speaker_Server\" running, waiting on incoming connections.\n");
 
   /* Generate and provide streamlined onboarding info if in RFOTM */
-  if (dpp_so_info_init() < 0) {
+  if (argc > 1 && dpp_so_info_init(argv[1]) < 0) {
     OC_ERR("Failed to provide streamlined onboarding information to wpa_supplicant");
   }
   display_device_uuid();

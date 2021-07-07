@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include <stdio.h>
 #include <wpa_ctrl.h>
 #include "oc_api.h"
 #include "oc_core_res.h"
@@ -6,17 +6,14 @@
 #include "oc_base64.h"
 #include "oc_streamlined_onboarding.h"
 
-static char *ctrl_iface = NULL;
+static char ctrl_iface[128];
 
 static int
 send_so_info(oc_so_info_t *so_info)
 {
   (void) so_info;
   struct wpa_ctrl *ctrl = NULL;
-  if (!ctrl_iface) {
-    OC_ERR("wpa_supplicant control interface not specified");
-    return -1;
-  }
+
   ctrl = wpa_ctrl_open(ctrl_iface);
   if (ctrl == NULL) {
     OC_ERR("Failed to open wpa_supplicant interface");
@@ -48,14 +45,33 @@ generate_so_psk(char *psk_output)
   return 0;
 }
 
+static void
+read_config(char *config_path)
+{
+  FILE *fp = NULL;
+  fp = fopen(config_path, "r");
+  if (!fp) {
+    OC_ERR("Failed to open DPP config file");
+    return;
+  }
+
+  char line[128];
+  while (fgets(line, sizeof(line), fp) != NULL) {
+    line[strlen(line) - 1] = '\0';
+    sscanf(line, "ctrl_iface=%s", ctrl_iface);
+  }
+}
+
 int
-dpp_so_info_init(void)
+dpp_so_info_init(char *config_path)
 {
   oc_sec_pstat_t *ps = oc_sec_get_pstat(0);
   if (ps->s != OC_DOS_RFOTM) {
     OC_DBG("Device not in RFOTM; will not generate SO info");
     return 1;
   }
+
+  read_config(config_path);
 
   oc_so_info_t so_info;
   oc_uuid_to_str(oc_core_get_device_id(0), so_info.uuid, sizeof(so_info.uuid));
