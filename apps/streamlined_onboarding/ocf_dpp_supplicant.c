@@ -75,6 +75,7 @@ read_config(char *config_path)
     line[strlen(line) - 1] = '\0';
     sscanf(line, "ctrl_iface=%s", ctrl_iface);
   }
+  fclose(fp);
 }
 
 int
