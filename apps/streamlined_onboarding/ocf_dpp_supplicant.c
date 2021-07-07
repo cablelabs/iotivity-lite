@@ -21,7 +21,22 @@ send_so_info(oc_so_info_t *so_info)
   }
   OC_DBG("Opened wpa_supplicant control interface");
 
-  // TODO Send actual info
+  char wpa_command[29 + strlen(so_info->uuid) + strlen(so_info->cred)];
+  sprintf(wpa_command, "DPP_OCF_INFO_ADD uuid=%s cred=%s", so_info->uuid, so_info->cred);
+  OC_DBG("WPA_CTRL command to send: %s\n", wpa_command);
+
+  size_t reply_len = 128;
+  char reply_buf[reply_len];
+  int ret = wpa_ctrl_request(ctrl, wpa_command, strlen(wpa_command), reply_buf, &reply_len, NULL);
+  if (ret == -2) {
+    OC_ERR("'%s' command timed out.", wpa_command);
+    return -2;
+  } else if (ret < 0) {
+    OC_ERR("'%s' command failed.", wpa_command);
+    return -1;
+  }
+  OC_DBG("wpa_ctrl response: %s", reply_buf);
+  wpa_ctrl_close(ctrl);
   return 0;
 }
 
