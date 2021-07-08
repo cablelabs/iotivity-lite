@@ -235,7 +235,7 @@ main(int argc, char *argv[])
     return init;
 
   /* Generate and provide streamlined onboarding info if in RFOTM */
-  if (argc > 1 && dpp_so_info_init(argv[1]) < 0) {
+  if (argc > 1 && (dpp_so_init(argv[1]) < 0 || dpp_so_gen_info() < 0)) {
     OC_ERR("Failed to provide streamlined onboarding information to wpa_supplicant");
   }
 
@@ -270,6 +270,7 @@ main(int argc, char *argv[])
   if (speaker_server != NULL) {
     oc_free_server_endpoints(speaker_server);
   }
+  dpp_so_teardown();
   oc_main_shutdown();
   return 0;
 }
