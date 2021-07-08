@@ -5,8 +5,6 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#define FIFOPATH "/tmp/my_fifo"
-
 pthread_mutex_t mutex;
 pthread_cond_t cv;
 static pthread_t event_loop_thread;
@@ -14,6 +12,7 @@ struct timespec ts;
 oc_resource_t *res = NULL;
 
 int quit = 0;
+static char *fifopath = NULL;
 
 static void
 get_diplomat(oc_request_t *request, oc_interface_mask_t iface_mask, void *user_data)
@@ -49,17 +48,21 @@ static void
 static void
 poll_for_uuid(void)
 {
-  if (mkfifo(FIFOPATH, 0666) != 0) {
-    PRINT("Failed to create named pipe for UUID reading. Already in place?\n");
+  if (fifopath == NULL) {
+    OC_ERR("Path to named pipe not set!");
+    return;
+  }
+  if (mkfifo(fifopath, 0666) != 0) {
+    OC_WRN("Failed to create named pipe for SO info. Already in place?\n");
   }
 
-  PRINT("Polling for UUID from named pipe...\n");
+  PRINT("Polling for Streamlined Onboarding info from named pipe...\n");
 
   FILE *uuid_pipe = NULL;
   char read_buffer[256];
 
   while (quit != 1) {
-    uuid_pipe = fopen(FIFOPATH, "r");
+    uuid_pipe = fopen(fifopath, "r");
     if (!uuid_pipe) {
       PRINT("Failed to open named pipe for UUID reading\n");
       break;
@@ -119,8 +122,14 @@ handle_signal(int signal)
 }
 
 int
-main(void)
+main(int argc, char *argv[])
 {
+  if (argc < 2) {
+    OC_ERR("Must provide a path to a named pipe for SO info reading!");
+    return -1;
+  }
+  fifopath = argv[1];
+
   int init;
   struct sigaction sa;
   sigfillset(&sa.sa_mask);
