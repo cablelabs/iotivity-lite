@@ -96,6 +96,5 @@ dpp_so_info_init(char *config_path)
     return -1;
   OC_DBG("Generated streamlined onboarding PSK: %s\n", so_info.cred);
 
-  // TODO: Send to Supplicant
   return send_so_info(&so_info);
 }

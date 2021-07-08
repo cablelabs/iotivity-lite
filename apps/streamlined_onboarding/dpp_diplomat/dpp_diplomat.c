@@ -1,18 +1,21 @@
 #include "oc_api.h"
 #include "port/oc_clock.h"
+#include "oc_streamlined_onboarding.h"
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <sys/stat.h>
 
-pthread_mutex_t mutex;
-pthread_cond_t cv;
+static pthread_mutex_t mutex;
+static pthread_cond_t cv;
 static pthread_t event_loop_thread;
 struct timespec ts;
-oc_resource_t *res = NULL;
+static oc_resource_t *res = NULL;
 
-int quit = 0;
+static int quit = 0;
 static char *fifopath = NULL;
+
+static oc_so_info_t *so_info = NULL;
 
 static void
 get_diplomat(oc_request_t *request, oc_interface_mask_t iface_mask, void *user_data)
@@ -45,6 +48,15 @@ static void
   return NULL;
 }
 
+static int
+process_so_info(char *so_info)
+{
+  // TODO: Update resource values
+  // sscanf(so_info, "%s %s", <var>, <var>);
+  oc_notify_observers(res);
+  return 0;
+}
+
 static void
 poll_for_uuid(void)
 {
@@ -58,26 +70,27 @@ poll_for_uuid(void)
 
   PRINT("Polling for Streamlined Onboarding info from named pipe...\n");
 
-  FILE *uuid_pipe = NULL;
+  FILE *so_pipe = NULL;
   char read_buffer[256];
 
   while (quit != 1) {
-    uuid_pipe = fopen(fifopath, "r");
-    if (!uuid_pipe) {
-      PRINT("Failed to open named pipe for UUID reading\n");
+    so_pipe = fopen(fifopath, "r");
+    if (!so_pipe) {
+      PRINT("Failed to open named pipe for SO info reading\n");
       break;
     }
-    size_t read_size = fread(read_buffer, 1, 256, uuid_pipe);
-    PRINT("Read size: %ld\n", read_size);
-    if (read_size != 256 && feof(uuid_pipe)) {
-      PRINT("Reached EOF\n");
+    size_t read_size = fread(read_buffer, 1, 256, so_pipe);
+    OC_DBG("Read size: %ld\n", read_size);
+    if (read_size != 256 && feof(so_pipe)) {
+      OC_DBG("Reached EOF\n");
     }
-    PRINT("String read: %s\n", read_buffer);
+    OC_DBG("String read: %s\n", read_buffer);
 
-    // TODO: Update resource values
-    oc_notify_observers(res);
+    if (process_so_info(read_buffer) != 0) {
+      OC_ERR("Failed to parse data as streamlined onboarding information");
+    }
 
-    if (uuid_pipe && fclose(uuid_pipe) != 0) {
+    if (so_pipe && fclose(so_pipe) != 0) {
       PRINT("Failed to close UUID pipe\n");
     }
   }
