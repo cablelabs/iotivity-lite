@@ -448,10 +448,13 @@ client_multithread_linux: libiotivity-lite-client.a $(ROOT_DIR)/apps/client_mult
 	@mkdir -p $@_creds
 	${CC} -o $@ ../../apps/client_multithread_linux.c libiotivity-lite-client.a -DOC_CLIENT ${CFLAGS}  ${LIBS}
 
-obj/ocf_dpp_supplicant.o: $(ROOT_DIR)/apps/streamlined_onboarding/ocf_dpp_supplicant.c $(ROOT_DIR)/apps/streamlined_onboarding/include/ocf_dpp_supplicant.h
-	${CC} -o $@ -c $< ${CFLAGS} ${SECURITY_HEADERS} ${LIBS}
+obj/oc_streamlined_onboarding.o: $(ROOT_DIR)/security/oc_streamlined_onboarding.c
+	${CC} -o $@ -c $^ ${CFLAGS} ${SECURITY_HEADERS} ${LIBS}
 
-speaker_server: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_server.c libiotivity-lite-server.a obj/ocf_dpp_supplicant.o
+obj/ocf_dpp_supplicant.o: $(ROOT_DIR)/apps/streamlined_onboarding/ocf_dpp_supplicant.c
+	${CC} -o $@ -c $^ ${CFLAGS} ${SECURITY_HEADERS} ${LIBS}
+
+speaker_server: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_server.c libiotivity-lite-server.a obj/ocf_dpp_supplicant.o obj/oc_streamlined_onboarding.o
 	@mkdir -p $@_creds
 	${CC} -o $@ $^ -DOC_SERVER ${CFLAGS} -I$(ROOT_DIR)/apps/streamlined_onboarding/include/ ${LIBS}
 

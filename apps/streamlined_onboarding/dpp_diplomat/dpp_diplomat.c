@@ -1,6 +1,5 @@
 #include "oc_api.h"
 #include "port/oc_clock.h"
-#include "oc_streamlined_onboarding.h"
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
