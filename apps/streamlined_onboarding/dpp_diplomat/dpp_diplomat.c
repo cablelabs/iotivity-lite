@@ -1,0 +1,153 @@
+#include "oc_api.h"
+#include "port/oc_clock.h"
+#include <pthread.h>
+#include <signal.h>
+#include <stdio.h>
+#include <sys/stat.h>
+
+#define FIFOPATH "/tmp/my_fifo"
+
+pthread_mutex_t mutex;
+pthread_cond_t cv;
+static pthread_t event_loop_thread;
+struct timespec ts;
+oc_resource_t *res = NULL;
+
+int quit = 0;
+
+static void
+get_diplomat(oc_request_t *request, oc_interface_mask_t iface_mask, void *user_data)
+{
+  (void) user_data;
+  (void) request;
+  (void) iface_mask;
+  PRINT("get_diplomat called\n");
+}
+
+static void
+*ocf_event_thread(void *data)
+{
+  (void)data;
+  oc_clock_time_t next_event;
+  while (quit != 1) {
+    next_event = oc_main_poll();
+
+    pthread_mutex_lock(&mutex);
+    if (next_event == 0) {
+      pthread_cond_wait(&cv, &mutex);
+    }
+    else {
+      ts.tv_sec = (next_event / OC_CLOCK_SECOND);
+      ts.tv_nsec = (next_event % OC_CLOCK_SECOND) * 1.e09 / OC_CLOCK_SECOND;
+      pthread_cond_timedwait(&cv, &mutex, &ts);
+    }
+    pthread_mutex_unlock(&mutex);
+  }
+  return NULL;
+}
+
+static void
+poll_for_uuid(void)
+{
+  if (mkfifo(FIFOPATH, 0666) != 0) {
+    PRINT("Failed to create named pipe for UUID reading. Already in place?\n");
+  }
+
+  PRINT("Polling for UUID from named pipe...\n");
+
+  FILE *uuid_pipe = NULL;
+  char read_buffer[256];
+
+  while (quit != 1) {
+    uuid_pipe = fopen(FIFOPATH, "r");
+    if (!uuid_pipe) {
+      PRINT("Failed to open named pipe for UUID reading\n");
+      break;
+    }
+    size_t read_size = fread(read_buffer, 1, 256, uuid_pipe);
+    PRINT("Read size: %ld\n", read_size);
+    if (read_size != 256 && feof(uuid_pipe)) {
+      PRINT("Reached EOF\n");
+    }
+    PRINT("String read: %s\n", read_buffer);
+
+    // TODO: Update resource values
+    oc_notify_observers(res);
+
+    if (uuid_pipe && fclose(uuid_pipe) != 0) {
+      PRINT("Failed to close UUID pipe\n");
+    }
+  }
+}
+
+static void
+register_resources(void)
+{
+  res = oc_new_resource(NULL, "/diplomat", 1, 0);
+  oc_resource_bind_resource_type(res, "oic.r.diplomat");
+  oc_resource_bind_resource_interface(res, OC_IF_R);
+  oc_resource_set_default_interface(res, OC_IF_R);
+  oc_resource_set_discoverable(res, true);
+  oc_resource_set_observable(res, true);
+  oc_resource_set_request_handler(res, OC_GET, get_diplomat, NULL);
+  oc_add_resource(res);
+}
+
+static int
+app_init(void)
+{
+  int ret = oc_init_platform("Linux", NULL, NULL);
+  ret |= oc_add_device("/oic/d", "oic.d.diplomat", "DPP Diplomat", "ocf.1.0.0",
+                       "ocf.res.1.0.0", NULL, NULL);
+  return ret;
+}
+
+static void
+signal_event_loop(void)
+{
+  pthread_mutex_lock(&mutex);
+  pthread_cond_signal(&cv);
+  pthread_mutex_unlock(&mutex);
+}
+
+void
+handle_signal(int signal)
+{
+  (void)signal;
+  quit = 1;
+  signal_event_loop();
+}
+
+int
+main(void)
+{
+  int init;
+  struct sigaction sa;
+  sigfillset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  sa.sa_handler = handle_signal;
+  sigaction(SIGINT, &sa, NULL);
+
+  static const oc_handler_t handler = { .init = app_init,
+                                        .signal_event_loop = signal_event_loop,
+                                        .register_resources = register_resources };
+
+#ifdef OC_STORAGE
+  oc_storage_config("./dpp_diplomat_creds");
+#endif /* OC_STORAGE */
+
+  init = oc_main_init(&handler);
+  if (init < 0)
+    return init;
+
+  if (pthread_create(&event_loop_thread, NULL, &ocf_event_thread, NULL) != 0) {
+    return -1;
+  }
+
+  poll_for_uuid();
+
+  pthread_join(event_loop_thread, NULL);
+
+  oc_main_shutdown();
+  return 0;
+}

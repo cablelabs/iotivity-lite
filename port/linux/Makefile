@@ -117,7 +117,7 @@ SAMPLES = server client temp_sensor simpleserver simpleserver_pki simpleclient c
 	  server_collections_linux server_block_linux client_block_linux server_certification_tests smart_home_server_linux multi_device_server multi_device_client smart_lock server_multithread_linux client_multithread_linux client_certification_tests server_rules secure_mcast_client secure_mcast_server1 secure_mcast_server2
 
 # DPP-baesd Streamlined Onboarding applications
-SO_DPP_SAMPLES = speaker_server speaker_client
+SO_DPP_SAMPLES = speaker_server speaker_client dpp_diplomat
 
 ifeq ($(V6DNS),1)
 	EXTRA_CFLAGS += -DOC_DNS_LOOKUP_IPV6
@@ -458,6 +458,10 @@ speaker_server: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_ser
 speaker_client: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_client.c libiotivity-lite-client.a obj/ocf_dpp_supplicant.o
 	@mkdir -p $@_creds
 	${CC} -o $@ $^ -DOC_CLIENT ${CFLAGS} -I$(ROOT_DIR)/apps/streamlined_onboarding/include/ ${LIBS}
+
+dpp_diplomat: $(ROOT_DIR)/apps/streamlined_onboarding/dpp_diplomat/dpp_diplomat.c libiotivity-lite-server.a
+	@mkdir -p $@_creds
+	${CC} -o $@ $^ -DOC_SERVER ${CFLAGS} ${LIBS}
 
 iotivity-lite-server.pc: iotivity-lite-server.pc.in
 	$(SED) > $@ < $< \
