@@ -25,7 +25,7 @@
 #include "oc_api.h"
 #include "oc_core_res.h"
 #include "port/oc_clock.h"
-#include "ocf_dpp_supplicant.h"
+#include "ocf_dpp.h"
 #include <signal.h>
 #include <pthread.h>
 
