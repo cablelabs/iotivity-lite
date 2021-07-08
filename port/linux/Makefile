@@ -458,13 +458,13 @@ speaker_server: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_ser
 	@mkdir -p $@_creds
 	${CC} -o $@ $^ -DOC_SERVER ${CFLAGS} -I$(ROOT_DIR)/apps/streamlined_onboarding/include/ ${LIBS}
 
-speaker_client: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_client.c libiotivity-lite-client.a obj/ocf_dpp.o
+speaker_client: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_client.c libiotivity-lite-client.a obj/ocf_dpp.o obj/oc_streamlined_onboarding.o
 	@mkdir -p $@_creds
 	${CC} -o $@ $^ -DOC_CLIENT ${CFLAGS} -I$(ROOT_DIR)/apps/streamlined_onboarding/include/ ${LIBS}
 
-dpp_diplomat: $(ROOT_DIR)/apps/streamlined_onboarding/dpp_diplomat/dpp_diplomat.c libiotivity-lite-server.a
+dpp_diplomat: $(ROOT_DIR)/apps/streamlined_onboarding/dpp_diplomat/dpp_diplomat.c libiotivity-lite-server.a obj/ocf_dpp.o obj/oc_streamlined_onboarding.o
 	@mkdir -p $@_creds
-	${CC} -o $@ $^ -DOC_SERVER ${CFLAGS} ${LIBS}
+	${CC} -o $@ $^ -DOC_SERVER ${CFLAGS} -I$(ROOT_DIR)/apps/streamlined_onboarding/include/ ${LIBS}
 
 iotivity-lite-server.pc: iotivity-lite-server.pc.in
 	$(SED) > $@ < $< \
