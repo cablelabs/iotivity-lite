@@ -83,13 +83,15 @@ dpp_so_init(char *config_path)
     return -1;
   }
   OC_DBG("Opened wpa_supplicant control interface");
-  return 0;
+  return wpa_ctrl_attach(ctrl);
 }
 
 int
 dpp_so_teardown(void)
 {
-  if (ctrl != NULL)
+  if (ctrl != NULL) {
+    wpa_ctrl_detach(ctrl);
     wpa_ctrl_close(ctrl);
+  }
   return 0;
 }
