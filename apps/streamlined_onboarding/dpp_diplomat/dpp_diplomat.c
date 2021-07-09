@@ -1,5 +1,6 @@
 #include "oc_api.h"
 #include "port/oc_clock.h"
+#include "ocf_dpp.h"
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
@@ -12,9 +13,8 @@ struct timespec ts;
 static oc_resource_t *res = NULL;
 
 static int quit = 0;
-static char *fifopath = NULL;
 
-static oc_so_info_t *so_info = NULL;
+// static oc_so_info_t *so_info = NULL;
 
 static void
 get_diplomat(oc_request_t *request, oc_interface_mask_t iface_mask, void *user_data)
@@ -50,6 +50,7 @@ static void
 static int
 process_so_info(char *so_info)
 {
+  (void)so_info;
   // TODO: Update resource values
   // sscanf(so_info, "%s %s", <var>, <var>);
   oc_notify_observers(res);
@@ -59,39 +60,12 @@ process_so_info(char *so_info)
 static void
 poll_for_uuid(void)
 {
-  if (fifopath == NULL) {
-    OC_ERR("Path to named pipe not set!");
-    return;
-  }
-  if (mkfifo(fifopath, 0666) != 0) {
-    OC_WRN("Failed to create named pipe for SO info. Already in place?\n");
-  }
-
-  PRINT("Polling for Streamlined Onboarding info from named pipe...\n");
-
-  FILE *so_pipe = NULL;
-  char read_buffer[256];
-
+  (void)process_so_info;
   while (quit != 1) {
-    so_pipe = fopen(fifopath, "r");
-    if (!so_pipe) {
-      PRINT("Failed to open named pipe for SO info reading\n");
-      break;
-    }
-    size_t read_size = fread(read_buffer, 1, 256, so_pipe);
-    OC_DBG("Read size: %ld\n", read_size);
-    if (read_size != 256 && feof(so_pipe)) {
-      OC_DBG("Reached EOF\n");
-    }
-    OC_DBG("String read: %s\n", read_buffer);
-
+    /*
     if (process_so_info(read_buffer) != 0) {
-      OC_ERR("Failed to parse data as streamlined onboarding information");
     }
-
-    if (so_pipe && fclose(so_pipe) != 0) {
-      PRINT("Failed to close UUID pipe\n");
-    }
+    */
   }
 }
 
@@ -137,10 +111,9 @@ int
 main(int argc, char *argv[])
 {
   if (argc < 2) {
-    OC_ERR("Must provide a path to a named pipe for SO info reading!");
+    OC_ERR("Must pass OCF DPP configuration file!");
     return -1;
   }
-  fifopath = argv[1];
 
   int init;
   struct sigaction sa;
@@ -161,6 +134,12 @@ main(int argc, char *argv[])
   if (init < 0)
     return init;
 
+  /* Hook into hostapd */
+  if (dpp_so_init(argv[1]) < 0) {
+    OC_ERR("Failed to connect to hostapd");
+    return -1;
+  }
+
   if (pthread_create(&event_loop_thread, NULL, &ocf_event_thread, NULL) != 0) {
     return -1;
   }
@@ -169,6 +148,7 @@ main(int argc, char *argv[])
 
   pthread_join(event_loop_thread, NULL);
 
+  dpp_so_teardown();
   oc_main_shutdown();
   return 0;
 }
