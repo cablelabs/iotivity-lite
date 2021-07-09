@@ -46,6 +46,9 @@ read_config(char *config_path)
   char line[128];
   while (fgets(line, sizeof(line), fp) != NULL) {
     line[strlen(line) - 1] = '\0';
+    if (line[0] == '#') {
+      continue;
+    }
     sscanf(line, "ctrl_iface=%s", ctrl_iface);
   }
   fclose(fp);
