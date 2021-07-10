@@ -214,7 +214,7 @@ endif
 
 ifeq ($(SO_DPP),1)
 	SAMPLES += $(SO_DPP_SAMPLES)
-	EXTRA_CFLAGS += -DOC_SO
+	EXTRA_CFLAGS += -DOC_SO -DCONFIG_OCF_ONBOARDING
 	LIBS += -lwpa_client
 endif
 

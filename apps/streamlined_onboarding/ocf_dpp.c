@@ -55,6 +55,59 @@ read_config(char *config_path)
   return 0;
 }
 
+static oc_so_info_t *
+parse_wpa_event(char *event_buf)
+{
+  char *pos = strstr(event_buf, DPP_EVENT_OCF_SO_INFO_RECEIVED);
+  if (pos == NULL) {
+    return NULL;
+  }
+  oc_so_info_t *new_info = malloc(sizeof(oc_so_info_t));
+  strncpy(new_info->uuid, pos + 16, OC_UUID_LEN - 1);
+  new_info->uuid[OC_UUID_LEN] = '\0';
+
+  pos = strstr(pos + 16, " ");
+  if (pos == NULL || strlen(pos + 1) > OC_UUID_LEN - 1) {
+    OC_ERR("Failed to parse credential from wpa message");
+    return NULL;
+  }
+  strncpy(new_info->cred, pos + 1, OC_SO_MAX_CRED_LEN - 1);
+  new_info->cred[OC_SO_MAX_CRED_LEN] = '\0';
+  OC_DBG("Parsed UUID: %s and cred: %s\n", new_info->uuid, new_info->cred);
+  return new_info;
+}
+
+oc_so_info_t *
+dpp_so_info_poll(void)
+{
+  if (ctrl == NULL)
+    return NULL;
+
+  oc_so_info_t *new_info_head = NULL, *cur, *temp;
+
+  char event_buf[4096];
+  size_t len = -1;
+
+  while (wpa_ctrl_pending(ctrl)) {
+    len = sizeof(event_buf);
+    wpa_ctrl_recv(ctrl, event_buf, &len);
+    event_buf[len] = '\0';
+    OC_DBG("Received event from wpa_ctrl: %s\n", event_buf);
+    temp = parse_wpa_event(event_buf);
+    if (temp == NULL) {
+      continue;
+    }
+    if (new_info_head == NULL) {
+      new_info_head = temp;
+      cur = new_info_head;
+      continue;
+    }
+    cur->next = temp;
+    cur = cur->next;
+  }
+  return new_info_head;
+}
+
 int
 dpp_so_gen_info(void)
 {
