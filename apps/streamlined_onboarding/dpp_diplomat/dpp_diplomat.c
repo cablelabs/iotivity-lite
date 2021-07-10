@@ -15,7 +15,7 @@ static oc_resource_t *res = NULL;
 
 static int quit = 0;
 
-// static oc_so_info_t *so_info = NULL;
+static oc_so_info_t *so_info_list = NULL;
 
 static void
 get_diplomat(oc_request_t *request, oc_interface_mask_t iface_mask, void *user_data)
@@ -49,20 +49,24 @@ static void
 }
 
 static int
-process_so_info(oc_so_info_t *so_info)
+process_so_info(oc_so_info_t *new_info)
 {
-  (void)so_info;
-  // TODO: Update resource values
-  // sscanf(so_info, "%s %s", <var>, <var>);
-  oc_notify_observers(res);
+  if (so_info_list == NULL) {
+    so_info_list = new_info;
+  }
+  else {
+    oc_so_append_info(so_info_list, new_info);
+  }
+  if (oc_notify_observers(res) > 0) {
+    oc_so_info_free(so_info_list);
+    so_info_list = NULL;
+  }
   return 0;
 }
 
 static void
 poll_for_so_info(void)
 {
-  (void)process_so_info;
-
   struct timespec poll_wait = { .tv_sec = 3, .tv_nsec = 0 };
   oc_so_info_t *new_info = NULL;
   while (quit != 1) {
@@ -156,5 +160,6 @@ main(int argc, char *argv[])
 
   dpp_so_teardown();
   oc_main_shutdown();
+  oc_so_info_free(so_info_list);
   return 0;
 }
