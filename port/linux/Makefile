@@ -218,6 +218,10 @@ ifeq ($(SO_DPP),1)
 	LIBS += -lwpa_client
 endif
 
+ifeq ($(CROSS),1)
+	export CC = arm-linux-gnueabihf-gcc
+endif
+
 CFLAGS += $(EXTRA_CFLAGS)
 CXXFLAGS += $(EXTRA_CFLAGS)
 
