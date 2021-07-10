@@ -22,3 +22,25 @@ oc_so_generate_psk(char *psk_output)
   return 0;
 }
 
+void
+oc_so_append_info(oc_so_info_t *head, oc_so_info_t *new_info)
+{
+  if (head == NULL) {
+    return;
+  }
+  while (head->next != NULL) {
+    head = head->next;
+  }
+  head->next = new_info;
+}
+
+void
+oc_so_info_free(oc_so_info_t *head)
+{
+  oc_so_info_t *cur;
+  while (head != NULL) {
+    cur = head;
+    head = head->next;
+    free(cur);
+  }
+}
