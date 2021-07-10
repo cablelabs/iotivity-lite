@@ -1,6 +1,7 @@
 #include "oc_api.h"
 #include "port/oc_clock.h"
 #include "ocf_dpp.h"
+#include "oc_streamlined_onboarding.h"
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
@@ -48,7 +49,7 @@ static void
 }
 
 static int
-process_so_info(char *so_info)
+process_so_info(oc_so_info_t *so_info)
 {
   (void)so_info;
   // TODO: Update resource values
@@ -58,14 +59,19 @@ process_so_info(char *so_info)
 }
 
 static void
-poll_for_uuid(void)
+poll_for_so_info(void)
 {
   (void)process_so_info;
+
+  struct timespec poll_wait = { .tv_sec = 3, .tv_nsec = 0 };
+  oc_so_info_t *new_info = NULL;
   while (quit != 1) {
-    /*
-    if (process_so_info(read_buffer) != 0) {
+    new_info = dpp_so_info_poll();
+    if (new_info) {
+      process_so_info(new_info);
     }
-    */
+    OC_DBG("Sleeping before next poll");
+    nanosleep(&poll_wait, &poll_wait);
   }
 }
 
@@ -144,7 +150,7 @@ main(int argc, char *argv[])
     return -1;
   }
 
-  poll_for_uuid();
+  poll_for_so_info();
 
   pthread_join(event_loop_thread, NULL);
 
