@@ -21,9 +21,31 @@ static void
 get_diplomat(oc_request_t *request, oc_interface_mask_t iface_mask, void *user_data)
 {
   (void) user_data;
-  (void) request;
-  (void) iface_mask;
   PRINT("get_diplomat called\n");
+
+  oc_rep_start_root_object();
+  switch (iface_mask) {
+  case OC_IF_BASELINE:
+    oc_process_baseline_interface(request->resource);
+    /* fall through */
+  case OC_IF_RW:
+    oc_rep_set_array(root, soinfo);
+    oc_so_info_t *cur = so_info_list;
+
+    while (cur != NULL) {
+      oc_rep_object_array_begin_item(soinfo);
+      oc_rep_set_text_string(soinfo, uuid, cur->uuid);
+      oc_rep_set_text_string(soinfo, cred, cur->cred);
+      oc_rep_object_array_end_item(soinfo);
+      cur = cur->next;
+    }
+    oc_rep_close_array(root, soinfo);
+    break;
+  default:
+    break;
+  }
+  oc_rep_end_root_object();
+  oc_send_response(request, OC_STATUS_OK);
 }
 
 static void
