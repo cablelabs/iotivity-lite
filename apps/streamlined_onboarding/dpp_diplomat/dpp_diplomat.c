@@ -22,17 +22,24 @@ get_diplomat(oc_request_t *request, oc_interface_mask_t iface_mask, void *user_d
 {
   (void) user_data;
   PRINT("get_diplomat called\n");
+  if (so_info_list == NULL) {
+    OC_DBG("No updated information to send\n");
+    oc_send_response(request, OC_STATUS_OK);
+    return;
+  }
 
   oc_rep_start_root_object();
   switch (iface_mask) {
   case OC_IF_BASELINE:
     oc_process_baseline_interface(request->resource);
     /* fall through */
+  case OC_IF_R:
   case OC_IF_RW:
     oc_rep_set_array(root, soinfo);
     oc_so_info_t *cur = so_info_list;
 
     while (cur != NULL) {
+      OC_DBG("Setting SO info values with uuid: %s and cred: %s\n", cur->uuid, cur->cred);
       oc_rep_object_array_begin_item(soinfo);
       oc_rep_set_text_string(soinfo, uuid, cur->uuid);
       oc_rep_set_text_string(soinfo, cred, cur->cred);
@@ -79,7 +86,10 @@ process_so_info(oc_so_info_t *new_info)
   else {
     oc_so_append_info(so_info_list, new_info);
   }
-  if (oc_notify_observers(res) > 0) {
+  int num_notified = oc_notify_observers(res);
+  if (num_notified > 0) {
+    PRINT("Notifying %d observers\n", num_notified);
+    PRINT("Freeing so_info_list\n");
     oc_so_info_free(so_info_list);
     so_info_list = NULL;
   }
