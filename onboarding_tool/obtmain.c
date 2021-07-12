@@ -31,6 +31,7 @@
 #define MAX_NUM_DEVICES (50)
 #define MAX_NUM_RESOURCES (100)
 #define MAX_NUM_RT (50)
+#define MAX_URI_LENGTH (30)
 
 /* Structure in app to track currently discovered owned/unowned devices */
 typedef struct device_handle_t
@@ -45,6 +46,10 @@ OC_MEMB(device_handles, device_handle_t, MAX_OWNED_DEVICES);
 OC_LIST(owned_devices);
 /* List of known un-owned devices */
 OC_LIST(unowned_devices);
+
+/* Diplomat resource information */
+static char diplomat_uri[MAX_URI_LENGTH];
+static oc_endpoint_t *diplomat_ep;
 
 #if defined(_WIN32)
 static HANDLE event_thread;
@@ -139,6 +144,7 @@ display_menu(void)
 #endif /* OC_CLOUD */
   PRINT("-----------------------------------------------\n");
   PRINT("[40] Discover unowned Device with matching UUID\n");
+  PRINT("[41] Observe Diplomat\n");
   PRINT("-----------------------------------------------\n");
 #ifdef OC_PKI
   PRINT("[96] Install new manufacturer trust anchor\n");
@@ -2163,6 +2169,73 @@ discover_resources(void)
   otb_mutex_unlock(app_sync_lock);
 }
 
+static void
+observe_diplomat(oc_client_response_t *data)
+{
+  PRINT("Observe Diplomat:\n");
+  if (data->code > 4) {
+    PRINT("Observe GET response failed with code %d\n", data->code);
+    return;
+  }
+  oc_rep_t *rep = data->payload;
+  while (rep != NULL) {
+    PRINT("key %s, value ", oc_string(rep->name));
+    switch (rep->type) {
+    case OC_REP_STRING:
+      PRINT("%s\n", oc_string(rep->value.string));
+      break;
+    default:
+      break;
+    }
+    rep = rep->next;
+  }
+}
+
+static oc_discovery_flags_t
+diplomat_discovery(const char *anchor, const char *uri, oc_string_array_t types,
+          oc_interface_mask_t iface_mask, oc_endpoint_t *endpoint,
+          oc_resource_properties_t bm, void *user_data)
+{
+  (void)anchor;
+  (void)iface_mask;
+  (void)bm;
+  (void)user_data;
+  int uri_len = strlen(uri);
+  uri_len = (uri_len >= MAX_URI_LENGTH) ? MAX_URI_LENGTH - 1 : uri_len;
+
+  for (int i = 0; i < (int)oc_string_array_get_allocated_size(types); i++) {
+    char *t = oc_string_array_get_item(types, i);
+    if (strlen(t) == 14 && strncmp(t, "oic.r.diplomat", 14) == 0) {
+      oc_endpoint_list_copy(&diplomat_ep, endpoint);
+      strncpy(diplomat_uri, uri, uri_len);
+      diplomat_uri[uri_len] = '\0';
+
+      PRINT("Resource %s hosted at endpoints:\n", diplomat_uri);
+      oc_endpoint_t *ep = endpoint;
+      while (ep != NULL) {
+        PRINTipaddr(*ep);
+        PRINT("\n");
+        ep = ep->next;
+      }
+
+      oc_do_observe(diplomat_uri, diplomat_ep, NULL, &observe_diplomat, HIGH_QOS, NULL);
+      PRINT("Sent OBSERVE request\n");
+      return OC_STOP_DISCOVERY;
+    }
+  }
+  return OC_CONTINUE_DISCOVERY;
+}
+
+static void
+discover_diplomat_for_observe(void)
+{
+  otb_mutex_lock(app_sync_lock);
+  if (!oc_do_ip_discovery("oic.r.diplomat", &diplomat_discovery, NULL)) {
+    PRINT("Failed to discover diplomat Devices\n");
+  }
+  otb_mutex_unlock(app_sync_lock);
+}
+
 void
 display_device_uuid()
 {
@@ -2326,6 +2399,9 @@ main(void)
   case 40:
     discover_unowned_device_by_uuid();
     break;
+  case 41:
+    discover_diplomat_for_observe();
+    break;
 #ifdef OC_PKI
     case 96:
       install_trust_anchor();
@@ -2352,6 +2428,11 @@ main(void)
 #elif defined(__linux__)
   pthread_join(event_thread, NULL);
 #endif
+
+  if (diplomat_ep != NULL) {
+    oc_stop_observe(diplomat_uri, diplomat_ep);
+  }
+  oc_free_server_endpoints(diplomat_ep);
 
   /* Free all device_handle_t objects allocated by this application */
   device_handle_t *device = (device_handle_t *)oc_list_pop(owned_devices);
