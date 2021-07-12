@@ -2170,19 +2170,37 @@ discover_resources(void)
 }
 
 static void
+parse_so_info(oc_rep_t *so_info)
+{
+  size_t str_len;
+  char *uuid = NULL;
+  char *cred = NULL;
+  while (so_info != NULL) {
+    oc_rep_get_string(so_info->value.object, "uuid", &uuid, &str_len);
+    oc_rep_get_string(so_info->value.object, "cred", &cred, &str_len);
+    PRINT("Parsed UUID: %s\n", uuid);
+    PRINT("Parsed CRED: %s\n", cred);
+    so_info = so_info->next;
+  }
+}
+
+static void
 observe_diplomat(oc_client_response_t *data)
 {
   PRINT("Observe Diplomat:\n");
   if (data->code > 4) {
-    PRINT("Observe GET response failed with code %d\n", data->code);
+    PRINT("Observe GET failed with code %d\n", data->code);
     return;
   }
   oc_rep_t *rep = data->payload;
+  oc_rep_t *so_info = NULL;
   while (rep != NULL) {
-    PRINT("key %s, value ", oc_string(rep->name));
+    OC_DBG("key %s", oc_string(rep->name));
     switch (rep->type) {
-    case OC_REP_STRING:
-      PRINT("%s\n", oc_string(rep->value.string));
+    case OC_REP_OBJECT_ARRAY:
+      if (oc_rep_get_object_array(rep, "soinfo", &so_info)) {
+        parse_so_info(so_info);
+      }
       break;
     default:
       break;
