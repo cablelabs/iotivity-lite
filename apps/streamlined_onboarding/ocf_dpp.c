@@ -64,7 +64,7 @@ parse_wpa_event(char *event_buf)
   }
   oc_so_info_t *new_info = malloc(sizeof(oc_so_info_t));
   strncpy(new_info->uuid, pos + 16, OC_UUID_LEN - 1);
-  new_info->uuid[OC_UUID_LEN] = '\0';
+  new_info->uuid[OC_UUID_LEN - 1] = '\0';
 
   pos = strstr(pos + 16, " ");
   if (pos == NULL || strlen(pos + 1) > OC_UUID_LEN - 1) {
@@ -72,7 +72,7 @@ parse_wpa_event(char *event_buf)
     return NULL;
   }
   strncpy(new_info->cred, pos + 1, OC_SO_MAX_CRED_LEN - 1);
-  new_info->cred[OC_SO_MAX_CRED_LEN] = '\0';
+  new_info->cred[OC_SO_MAX_CRED_LEN - 1] = '\0';
   OC_DBG("Parsed UUID: %s and cred: %s\n", new_info->uuid, new_info->cred);
   return new_info;
 }
