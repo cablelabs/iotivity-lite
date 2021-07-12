@@ -63,6 +63,7 @@ parse_wpa_event(char *event_buf)
     return NULL;
   }
   oc_so_info_t *new_info = malloc(sizeof(oc_so_info_t));
+  new_info->next = NULL;
   strncpy(new_info->uuid, pos + 16, OC_UUID_LEN - 1);
   new_info->uuid[OC_UUID_LEN - 1] = '\0';
 
