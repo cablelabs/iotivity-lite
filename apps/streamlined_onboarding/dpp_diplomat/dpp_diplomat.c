@@ -34,8 +34,7 @@ get_diplomat(oc_request_t *request, oc_interface_mask_t iface_mask, void *user_d
     oc_process_baseline_interface(request->resource);
     /* fall through */
   case OC_IF_R:
-  case OC_IF_RW:
-    oc_rep_set_array(root, soinfo);
+    oc_rep_open_array(root, soinfo);
     oc_so_info_t *cur = so_info_list;
 
     while (cur != NULL) {
