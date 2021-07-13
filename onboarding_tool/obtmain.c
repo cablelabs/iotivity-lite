@@ -2181,36 +2181,6 @@ perform_streamlined_onboarding(oc_so_info_t *so_info)
 }
 
 static void
-parse_so_info(oc_rep_t *so_info)
-{
-  oc_so_info_t *head, *cur = NULL;
-  size_t str_len;
-  char *uuid = NULL;
-  char *cred = NULL;
-  while (so_info != NULL) {
-    cur = malloc(sizeof(oc_so_info_t));
-    oc_rep_get_string(so_info->value.object, "uuid", &uuid, &str_len);
-    uuid[str_len] = '\0';
-    oc_rep_get_string(so_info->value.object, "cred", &cred, &str_len);
-    cred[str_len] = '\0';
-
-    PRINT("Parsed UUID: %s\n", uuid);
-    PRINT("Parsed CRED: %s with length %d\n", cred, str_len);
-    strncpy(cur->uuid, uuid, OC_UUID_LEN - 1);
-    strncpy(cur->cred, cred, str_len);
-
-    if (head == NULL) {
-      head = cur;
-    }
-    else {
-      oc_so_append_info(head, cur);
-    }
-    so_info = so_info->next;
-  }
-  perform_streamlined_onboarding(head);
-}
-
-static void
 observe_diplomat(oc_client_response_t *data)
 {
   PRINT("Observe Diplomat:\n");
@@ -2219,13 +2189,14 @@ observe_diplomat(oc_client_response_t *data)
     return;
   }
   oc_rep_t *rep = data->payload;
-  oc_rep_t *so_info = NULL;
+  oc_rep_t *so_info_rep_array = NULL;
   while (rep != NULL) {
     OC_DBG("key %s", oc_string(rep->name));
     switch (rep->type) {
     case OC_REP_OBJECT_ARRAY:
-      if (oc_rep_get_object_array(rep, "soinfo", &so_info)) {
-        parse_so_info(so_info);
+      if (oc_rep_get_object_array(rep, "soinfo", &so_info_rep_array)) {
+        oc_so_info_t *so_info = oc_so_parse_rep_array(so_info_rep_array);
+        perform_streamlined_onboarding(so_info);
       }
       break;
     default:

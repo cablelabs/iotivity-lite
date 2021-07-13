@@ -34,6 +34,35 @@ oc_so_append_info(oc_so_info_t *head, oc_so_info_t *new_info)
   head->next = new_info;
 }
 
+oc_so_info_t *
+oc_so_parse_rep_array(oc_rep_t *so_info_rep_array)
+{
+  oc_so_info_t *head = NULL, *cur = NULL;
+  size_t str_len;
+  char *uuid = NULL, *cred = NULL;
+  while (so_info_rep_array != NULL) {
+    cur = malloc(sizeof(oc_so_info_t));
+    oc_rep_get_string(so_info_rep_array->value.object, "uuid", &uuid, &str_len);
+    uuid[str_len] = '\0';
+    oc_rep_get_string(so_info_rep_array->value.object, "cred", &cred, &str_len);
+    cred[str_len] = '\0';
+
+    PRINT("Parsed UUID: %s\n", uuid);
+    PRINT("Parsed CRED: %s with length %d\n", cred, str_len);
+    strncpy(cur->uuid, uuid, OC_UUID_LEN - 1);
+    strncpy(cur->cred, cred, OC_SO_MAX_CRED_LEN - 1);
+
+    if (head == NULL) {
+      head = cur;
+    }
+    else {
+      oc_so_append_info(head, cur);
+    }
+    so_info_rep_array = so_info_rep_array->next;
+  }
+  return head;
+}
+
 void
 oc_so_info_free(oc_so_info_t *head)
 {
