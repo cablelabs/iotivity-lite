@@ -11,6 +11,7 @@ typedef struct oc_so_info_t {
 
 int oc_so_generate_psk(char *psk_output);
 void oc_so_append_info(oc_so_info_t *head, oc_so_info_t *new_info);
+oc_so_info_t *oc_so_parse_rep_array(oc_rep_t *so_info);
 void oc_so_info_free(oc_so_info_t *head);
 
 #endif /* OC_STREAMLINED_ONBOARDING_H */

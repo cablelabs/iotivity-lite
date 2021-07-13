@@ -440,9 +440,9 @@ cloud_tests: libiotivity-lite-client-server.a $(ROOT_DIR)/apps/cloud_certificati
 	@mkdir -p $@_creds
 	${CC} -o $@ ../../apps/cloud_certification_tests.c libiotivity-lite-client-server.a -DOC_CLIENT -DOC_SERVER ${CFLAGS} ${CFLAGS_CLOUD} ${LIBS}
 
-${OBT}: libiotivity-lite-client.a $(ROOT_DIR)/onboarding_tool/obtmain.c copy_pki_certs
+${OBT}: libiotivity-lite-client.a $(ROOT_DIR)/onboarding_tool/obtmain.c obj/oc_streamlined_onboarding.o copy_pki_certs
 	@mkdir -p $@_creds
-	${CC} -o $@ ../../onboarding_tool/obtmain.c libiotivity-lite-client.a -DOC_CLIENT ${CFLAGS}  ${LIBS}
+	${CC} -o $@ ../../onboarding_tool/obtmain.c libiotivity-lite-client.a obj/oc_streamlined_onboarding.o -DOC_CLIENT ${CFLAGS}  ${LIBS}
 
 server_multithread_linux: libiotivity-lite-server.a $(ROOT_DIR)/apps/server_multithread_linux.c
 	@mkdir -p $@_creds
