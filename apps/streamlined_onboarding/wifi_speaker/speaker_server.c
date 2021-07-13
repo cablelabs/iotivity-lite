@@ -523,9 +523,12 @@ main(int argc, char *argv[])
 
   PRINT("OCF server \"Speaker_Server\" running, waiting on incoming connections.\n");
 
-  /* Generate and provide streamlined onboarding info if in RFOTM */
-  if (argc > 1 && (dpp_so_init(argv[1]) < 0 || dpp_so_gen_info() < 0)) {
-    OC_ERR("Failed to provide streamlined onboarding information to wpa_supplicant");
+  /* Generate streamlined onboarding info if in RFOTM */
+  if (oc_so_info_init() == 0) {
+    OC_DBG("Generated streamlined onboarding info");
+    if (argc > 1 && (dpp_so_init(argv[1]) < 0 || dpp_send_so_info() < 0)) {
+      OC_ERR("Failed to provide streamlined onboarding information to wpa_supplicant");
+    }
   }
   display_device_uuid();
 
