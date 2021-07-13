@@ -17,6 +17,7 @@
 #include "oc_api.h"
 #include "oc_core_res.h"
 #include "oc_obt.h"
+#include "oc_base64.h"
 #include "oc_streamlined_onboarding.h"
 #include "port/oc_clock.h"
 #if defined(_WIN32)
@@ -2171,10 +2172,30 @@ discover_resources(void)
 }
 
 static void
-perform_streamlined_onboarding(oc_so_info_t *so_info)
+streamlined_onboarding_discovery_cb(oc_uuid_t *uuid, oc_endpoint_t *eps, void *data)
+{
+  (void)eps;
+  char di[OC_UUID_LEN];
+  oc_uuid_to_str(uuid, di, OC_UUID_LEN);
+  PRINT("Discovered device with uuid %s\n", di);
+  if (data == NULL) {
+    return;
+  }
+  // TODO: This should first prompt for user confirmation before onboarding
+
+  oc_base64_decode((uint8_t *)data, strlen(data));
+  free(data);
+}
+
+static void
+perform_streamlined_discovery(oc_so_info_t *so_info)
 {
   while (so_info != NULL) {
-    PRINT("Onboard device with UUID %s and cred %s\n", so_info->uuid, so_info->cred);
+    char *cred = calloc(OC_SO_MAX_CRED_LEN, 1);
+    PRINT("Onboarding device with UUID %s and cred %s\n", so_info->uuid, so_info->cred);
+    memcpy(cred, so_info->cred, strlen(so_info->cred));
+
+    oc_obt_discover_unowned_devices(streamlined_onboarding_discovery_cb, so_info->uuid, cred);
     so_info = so_info->next;
   }
   oc_so_info_free(so_info);
@@ -2196,7 +2217,7 @@ observe_diplomat(oc_client_response_t *data)
     case OC_REP_OBJECT_ARRAY:
       if (oc_rep_get_object_array(rep, "soinfo", &so_info_rep_array)) {
         oc_so_info_t *so_info = oc_so_parse_rep_array(so_info_rep_array);
-        perform_streamlined_onboarding(so_info);
+        perform_streamlined_discovery(so_info);
       }
       break;
     default:
