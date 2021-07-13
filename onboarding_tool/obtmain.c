@@ -17,6 +17,7 @@
 #include "oc_api.h"
 #include "oc_core_res.h"
 #include "oc_obt.h"
+#include "oc_streamlined_onboarding.h"
 #include "port/oc_clock.h"
 #if defined(_WIN32)
 #include <windows.h>
@@ -2170,18 +2171,43 @@ discover_resources(void)
 }
 
 static void
+perform_streamlined_onboarding(oc_so_info_t *so_info)
+{
+  while (so_info != NULL) {
+    PRINT("Onboard device with UUID %s and cred %s\n", so_info->uuid, so_info->cred);
+    so_info = so_info->next;
+  }
+  oc_so_info_free(so_info);
+}
+
+static void
 parse_so_info(oc_rep_t *so_info)
 {
+  oc_so_info_t *head, *cur = NULL;
   size_t str_len;
   char *uuid = NULL;
   char *cred = NULL;
   while (so_info != NULL) {
+    cur = malloc(sizeof(oc_so_info_t));
     oc_rep_get_string(so_info->value.object, "uuid", &uuid, &str_len);
+    uuid[str_len] = '\0';
     oc_rep_get_string(so_info->value.object, "cred", &cred, &str_len);
+    cred[str_len] = '\0';
+
     PRINT("Parsed UUID: %s\n", uuid);
-    PRINT("Parsed CRED: %s\n", cred);
+    PRINT("Parsed CRED: %s with length %d\n", cred, str_len);
+    strncpy(cur->uuid, uuid, OC_UUID_LEN - 1);
+    strncpy(cur->cred, cred, str_len);
+
+    if (head == NULL) {
+      head = cur;
+    }
+    else {
+      oc_so_append_info(head, cur);
+    }
     so_info = so_info->next;
   }
+  perform_streamlined_onboarding(head);
 }
 
 static void
