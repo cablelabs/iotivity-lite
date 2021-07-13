@@ -146,7 +146,9 @@ display_menu(void)
 #endif /* OC_CLOUD */
   PRINT("-----------------------------------------------\n");
   PRINT("[40] Discover unowned Device with matching UUID\n");
+#ifdef OC_SO
   PRINT("[41] Observe Diplomat\n");
+#endif /* OC_SO */
   PRINT("-----------------------------------------------\n");
 #ifdef OC_PKI
   PRINT("[96] Install new manufacturer trust anchor\n");
@@ -2171,6 +2173,7 @@ discover_resources(void)
   otb_mutex_unlock(app_sync_lock);
 }
 
+#ifdef OC_SO
 static void
 streamlined_onboarding_discovery_cb(oc_uuid_t *uuid, oc_endpoint_t *eps, void *data)
 {
@@ -2271,6 +2274,7 @@ discover_diplomat_for_observe(void)
   }
   otb_mutex_unlock(app_sync_lock);
 }
+#endif /* OC_SO */
 
 void
 display_device_uuid()
@@ -2435,9 +2439,11 @@ main(void)
   case 40:
     discover_unowned_device_by_uuid();
     break;
+#ifdef OC_SO
   case 41:
     discover_diplomat_for_observe();
     break;
+#endif /* OC_SO */
 #ifdef OC_PKI
     case 96:
       install_trust_anchor();
