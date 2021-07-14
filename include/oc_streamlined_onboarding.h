@@ -9,6 +9,8 @@ typedef struct oc_so_info_t {
   struct oc_so_info_t *next;
 } oc_so_info_t;
 
+extern oc_so_info_t self_so_info;
+
 int oc_so_info_init(void);
 void oc_so_append_info(oc_so_info_t *head, oc_so_info_t *new_info);
 oc_so_info_t *oc_so_parse_rep_array(oc_rep_t *so_info);

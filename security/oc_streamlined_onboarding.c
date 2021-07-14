@@ -4,6 +4,7 @@
 #include "oc_base64.h"
 #include "oc_streamlined_onboarding.h"
 
+/* Global variable used to reference this device's streamlined onboarding info. */
 oc_so_info_t self_so_info;
 
 /* TODO
