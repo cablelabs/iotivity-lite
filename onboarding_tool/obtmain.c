@@ -17,7 +17,6 @@
 #include "oc_api.h"
 #include "oc_core_res.h"
 #include "oc_obt.h"
-#include "oc_base64.h"
 #include "oc_streamlined_onboarding.h"
 #include "port/oc_clock.h"
 #if defined(_WIN32)
@@ -2202,8 +2201,7 @@ streamlined_onboarding_discovery_cb(oc_uuid_t *uuid, oc_endpoint_t *eps, void *d
   }
   // TODO: This should first prompt for user confirmation before onboarding
 
-  int decoded_len = oc_base64_decode((uint8_t *)data, strlen(data));
-  int ret = oc_obt_perform_streamlined_otm(uuid, (const unsigned char *)data, decoded_len, so_otm_cb, NULL);
+  int ret = oc_obt_perform_streamlined_otm(uuid, (const unsigned char *)data, strlen(data), so_otm_cb, NULL);
   if (ret >= 0) {
     PRINT("Successfully issued request to perform Streamlined Onboarding OTM\n");
   }

@@ -628,7 +628,7 @@ oc_obt_perform_streamlined_otm(oc_uuid_t *uuid, const unsigned char *pin,
 
   int credid = oc_sec_add_new_cred(
     0, false, NULL, -1, OC_CREDTYPE_PSK, OC_CREDUSAGE_NULL, subjectuuid,
-    OC_ENCODING_RAW, 16, key, 0, 0, NULL, NULL, NULL);
+    OC_ENCODING_BASE64, 16, key, 0, 0, NULL, NULL, NULL);
 
   if (credid == -1) {
     oc_obt_free_otm_ctx(o, -1, OC_OBT_OTM_SO);
