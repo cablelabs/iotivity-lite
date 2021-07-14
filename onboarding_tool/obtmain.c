@@ -2175,6 +2175,22 @@ discover_resources(void)
 
 #ifdef OC_SO
 static void
+so_otm_cb(oc_uuid_t *uuid, int status, void *data)
+{
+  (void)data;
+  char di[37];
+  oc_uuid_to_str(uuid, di, 37);
+
+  if (status >= 0) {
+    PRINT("\nSuccessfully performed OTM on device with UUID %s\n", di);
+    // oc_list_add(owned_devices, device);
+  } else {
+    // oc_memb_free(&device_handles, device);
+    PRINT("\nERROR performing ownership transfer on device %s\n", di);
+  }
+}
+
+static void
 streamlined_onboarding_discovery_cb(oc_uuid_t *uuid, oc_endpoint_t *eps, void *data)
 {
   (void)eps;
@@ -2186,8 +2202,11 @@ streamlined_onboarding_discovery_cb(oc_uuid_t *uuid, oc_endpoint_t *eps, void *d
   }
   // TODO: This should first prompt for user confirmation before onboarding
 
-  oc_base64_decode((uint8_t *)data, strlen(data));
-  free(data);
+  int decoded_len = oc_base64_decode((uint8_t *)data, strlen(data));
+  int ret = oc_obt_perform_streamlined_otm(uuid, (const unsigned char *)data, decoded_len, so_otm_cb, NULL);
+  if (ret >= 0) {
+    PRINT("Successfully issued request to perform Streamlined Onboarding OTM\n");
+  }
 }
 
 static void
