@@ -59,6 +59,13 @@
 #include "oc_oscore.h"
 #endif /* OC_OSCORE */
 
+#ifdef OC_SO
+#include "oc_base64.h"
+#include "oc_streamlined_onboarding.h"
+
+extern oc_so_info_t self_so_info;
+#endif /* OC_SO */
+
 OC_PROCESS(oc_tls_handler, "TLS Process");
 OC_MEMB(tls_peers_s, oc_tls_peer_t, OC_MAX_TLS_PEERS);
 OC_LIST(tls_peers);
@@ -624,11 +631,20 @@ get_psk_cb(void *data, mbedtls_ssl_context *ssl, const unsigned char *identity,
     oc_sec_pstat_t *ps = oc_sec_get_pstat(peer->endpoint.device);
     /* To an OBT performing the PIN OTM, a device signals its identity
      * with the oic.sec.doxm.rdp: prefix.
+     * Similarly, streamlined onboarding is identified with the
+     * oic.sec.doxm.so: prefix.
      */
-    if (ps->s == OC_DOS_RFNOP && identity_len > 16 &&
-        memcmp(identity, "oic.sec.doxm.rdp:", 17) == 0) {
-      identity += 17;
-      identity_len -= 17;
+    if (ps->s == OC_DOS_RFNOP && identity_len > 16) {
+      if (memcmp(identity, "oic.sec.doxm.rdp:", 17) == 0) {
+        identity += 17;
+        identity_len -= 17;
+      }
+#ifdef OC_SO
+      else if (memcmp(identity, "oic.sec.doxm.so:", 16) == 0) {
+        identity += 16;
+        identity_len -= 16;
+      }
+#endif /* OC_SO */
     }
     oc_sec_cred_t *cred =
       oc_sec_find_cred((oc_uuid_t *)identity, OC_CREDTYPE_PSK,
@@ -659,6 +675,35 @@ get_psk_cb(void *data, mbedtls_ssl_context *ssl, const unsigned char *identity,
 
         if (oc_tls_pbkdf2(PIN, PIN_LEN, &doxm->deviceuuid, 1000, key, 16) !=
             0) {
+          OC_ERR("oc_tls: error deriving PPSK");
+          return -1;
+        }
+
+        if (mbedtls_ssl_set_hs_psk(ssl, key, 16) != 0) {
+          OC_ERR("oc_tls: error applying PPSK to current handshake");
+          return -1;
+        }
+        return 0;
+      }
+      else if (ps->s == OC_DOS_RFOTM && doxm->oxmsel == OC_OXMTYPE_SO) {
+        if (identity_len != 16 ||
+            memcmp(identity, "oic.sec.doxm.so", 16) != 0) {
+          OC_ERR("oc_tls: OBT identity incorrectly set for SO OTM");
+          return -1;
+        }
+        OC_DBG("oc_tls: deriving PPSK for SO OTM");
+        memcpy(peer->uuid.id, identity, 16);
+
+        uint8_t decoded_cred[OC_SO_MAX_CRED_LEN];
+        memcpy(decoded_cred, self_so_info.cred, OC_SO_MAX_CRED_LEN);
+        int decoded_len = oc_base64_decode(decoded_cred, strlen(self_so_info.cred));
+        if (decoded_len < 0) {
+          OC_ERR("Failed to decode own streamlined onboarding cred.");
+          return -1;
+        }
+
+        uint8_t key[16];
+        if (oc_tls_pbkdf2(decoded_cred, decoded_len, &doxm->deviceuuid, 1000, key, 16) != 0) {
           OC_ERR("oc_tls: error deriving PPSK");
           return -1;
         }
@@ -1322,7 +1367,16 @@ oc_tls_populate_ssl_config(mbedtls_ssl_config *conf, size_t device, int role,
       memcpy(identity_hint, "oic.sec.doxm.rdp:", 17);
       memcpy(identity_hint + 17, device_id->id, 16);
       identity_hint_len = 33;
-    } else {
+    }
+#ifdef OC_SO
+    else if (pstat->s == OC_DOS_RFOTM && doxm->oxmsel == OC_OXMTYPE_SO) {
+      memcpy(identity_hint, "oic.sec.doxm.so:", 16);
+      memcpy(identity_hint + 16, device_id->id, 16);
+      identity_hint_len = 32;
+    }
+#endif /* OC_SO */
+    else
+    {
       memcpy(identity_hint, device_id->id, 16);
       identity_hint_len = 16;
     }
