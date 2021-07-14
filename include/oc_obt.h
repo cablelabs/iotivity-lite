@@ -518,6 +518,11 @@ int oc_obt_perform_random_pin_otm(oc_uuid_t *uuid, const unsigned char *pin,
                                   size_t pin_len, oc_obt_device_status_cb_t cb,
                                   void *data);
 
+#ifdef OC_SO
+int oc_obt_perform_streamlined_otm(oc_uuid_t *uuid, const unsigned char *psk,
+    size_t psk_len, oc_obt_device_status_cb_t cb, void *data);
+#endif /* OC_SO */
+
 /**
  * Perform ownership transfer method (OTM) using Manufacturer Certificate
  *
