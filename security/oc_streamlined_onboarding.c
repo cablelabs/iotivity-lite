@@ -1,13 +1,18 @@
-#include "oc_base64.h"
 #include "oc_api.h"
+#include "oc_core_res.h"
+#include "oc_pstat.h"
+#include "oc_base64.h"
 #include "oc_streamlined_onboarding.h"
+
+/* Global variable used to reference this device's streamlined onboarding info. */
+oc_so_info_t self_so_info;
 
 /* TODO
  * Currently generates a simple, base64 encoded 16-byte PSK. Should be updated
  * to generate a COSE-encoded symmetric key.
  */
-int
-oc_so_generate_psk(char *psk_output)
+static int
+oc_so_generate_psk(void)
 {
   // Similar to oc_tls generation of random pin
   int psk_len = 16;
@@ -15,10 +20,27 @@ oc_so_generate_psk(char *psk_output)
   for (int i = 0; i < psk_len; i++) {
     psk[i] = oc_random_value();
   }
-  int output_len = oc_base64_encode(psk, psk_len, (uint8_t *)psk_output, OC_SO_MAX_CRED_LEN);
+  int output_len = oc_base64_encode(psk, psk_len, (uint8_t *)self_so_info.cred, OC_SO_MAX_CRED_LEN);
   if (output_len < 0)
     return -1;
-  psk_output[output_len] = '\0';
+  self_so_info.cred[output_len] = '\0';
+  return 0;
+}
+
+int
+oc_so_info_init(void)
+{
+  oc_sec_pstat_t *ps = oc_sec_get_pstat(0);
+  if (ps->s != OC_DOS_RFOTM) {
+    OC_DBG("Device not in RFOTM; will not generate SO info");
+    return 1;
+  }
+
+  oc_uuid_to_str(oc_core_get_device_id(0), self_so_info.uuid, sizeof(self_so_info.uuid));
+  OC_DBG("Generating streamlined onboarding info for device with UUID: %s", self_so_info.uuid);
+  if (oc_so_generate_psk() != 0)
+    return -1;
+  OC_DBG("Generated streamlined onboarding PSK: %s\n", self_so_info.cred);
   return 0;
 }
 

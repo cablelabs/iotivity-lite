@@ -99,6 +99,9 @@ void oc_tls_generate_random_pin(void);
 /* Internal interface for changing psk authority hint */
 #ifdef OC_CLIENT
 void oc_tls_use_pin_obt_psk_identity(void);
+#ifdef OC_SO
+void oc_tls_use_so_obt_psk_identity(void);
+#endif /* OC_SO */
 #endif /* OC_CLIENT */
 
 /* Internal interface for deriving a PSK for the Random PIN OTM */

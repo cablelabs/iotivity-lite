@@ -90,6 +90,9 @@ evaluate_supported_oxms(size_t device)
     doxm[device].oxms[doxm[device].num_oxms++] = OC_OXMTYPE_MFG_CERT;
   }
 #endif /* OC_PKI */
+#ifdef OC_SO
+  doxm[device].oxms[doxm[device].num_oxms++] = OC_OXMTYPE_SO;
+#endif /* OC_SO */
 }
 
 void

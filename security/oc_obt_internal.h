@@ -198,7 +198,10 @@ typedef enum {
   OC_OBT_OTM_JW = 0,
   OC_OBT_RDP,
   OC_OBT_OTM_RDP,
-  OC_OBT_OTM_CERT
+  OC_OBT_OTM_CERT,
+#ifdef OC_SO
+  OC_OBT_OTM_SO
+#endif /* OC_SO */
 } oc_obt_otm_t;
 
 oc_endpoint_t *oc_obt_get_unsecure_endpoint(oc_endpoint_t *endpoint);

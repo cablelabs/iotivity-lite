@@ -29,16 +29,25 @@
 extern "C" {
 #endif
 
+#ifdef OC_SO
+#define OC_NUM_DOXM (4)
+#else
+#define OC_NUM_DOXM (3)
+#endif /* OC_SO */
+
 typedef enum oc_sec_doxmtype_t {
   OC_OXMTYPE_JW = 0,
   OC_OXMTYPE_RDP = 1,
-  OC_OXMTYPE_MFG_CERT = 2
+  OC_OXMTYPE_MFG_CERT = 2,
+#ifdef OC_SO
+  OC_OXMTYPE_SO = 3
+#endif /* OC_SO */
 } oc_sec_oxmtype_t;
 
 typedef struct
 {
   int oxmsel;
-  int oxms[3];
+  int oxms[OC_NUM_DOXM];
   int num_oxms;
   int sct;
   bool owned;
