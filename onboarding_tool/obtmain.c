@@ -28,6 +28,7 @@
 #endif
 #include <signal.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #define MAX_NUM_DEVICES (50)
 #define MAX_NUM_RESOURCES (100)
@@ -2214,6 +2215,8 @@ perform_streamlined_discovery(oc_so_info_t *so_info)
     char *cred = calloc(OC_SO_MAX_CRED_LEN, 1);
     PRINT("Onboarding device with UUID %s and cred %s\n", so_info->uuid, so_info->cred);
     memcpy(cred, so_info->cred, strlen(so_info->cred));
+
+    sleep(5);
 
     oc_obt_discover_unowned_devices(streamlined_onboarding_discovery_cb, so_info->uuid, cred);
     so_info = so_info->next;
