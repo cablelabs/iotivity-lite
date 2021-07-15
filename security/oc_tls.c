@@ -103,6 +103,14 @@ oc_tls_use_pin_obt_psk_identity(void)
 {
   use_pin_obt_psk_identity = true;
 }
+#ifdef OC_SO
+static bool use_so_obt_psk_identity = false;
+void
+oc_tls_use_so_obt_psk_identity(void)
+{
+  use_so_obt_psk_identity = true;
+}
+#endif /* OC_SO */
 #endif /* OC_CLIENT */
 
 #ifdef OC_PKI
@@ -685,9 +693,10 @@ get_psk_cb(void *data, mbedtls_ssl_context *ssl, const unsigned char *identity,
         }
         return 0;
       }
+#ifdef OC_SO
       else if (ps->s == OC_DOS_RFOTM && doxm->oxmsel == OC_OXMTYPE_SO) {
-        if (identity_len != 16 ||
-            memcmp(identity, "oic.sec.doxm.so", 16) != 0) {
+        if (identity_len != 15 ||
+            memcmp(identity, "oic.sec.doxm.so", 15) != 0) {
           OC_ERR("oc_tls: OBT identity incorrectly set for SO OTM");
           return -1;
         }
@@ -714,6 +723,7 @@ get_psk_cb(void *data, mbedtls_ssl_context *ssl, const unsigned char *identity,
         }
         return 0;
       }
+#endif /* OC_SO */
     }
   }
   OC_ERR("oc_tls: could not find peer credential");
@@ -1139,6 +1149,9 @@ oc_tls_set_ciphersuites(mbedtls_ssl_config *conf, oc_endpoint_t *endpoint)
       ciphers = (int *)jw_otm_priority;
       break;
     case OC_OXMTYPE_RDP:
+#ifdef OC_SO
+    case OC_OXMTYPE_SO:
+#endif /* OC_SO */
       OC_DBG("oc_tls: selected PIN OTM priority");
       ciphers = (int *)pin_otm_priority;
       break;
@@ -1357,6 +1370,16 @@ oc_tls_populate_ssl_config(mbedtls_ssl_config *conf, size_t device, int role,
       return -1;
     }
   } else
+#ifdef OC_SO
+    if (role == MBEDTLS_SSL_IS_CLIENT && use_so_obt_psk_identity) {
+    use_so_obt_psk_identity = false;
+    if (mbedtls_ssl_conf_psk(conf, device_id->id, 1,
+                             (const unsigned char *)"oic.sec.doxm.so",
+                             15) != 0) {
+      return -1;
+    }
+  } else
+#endif /* OC_SO */
 #endif /* OC_CLIENT */
   {
     unsigned char identity_hint[33];
