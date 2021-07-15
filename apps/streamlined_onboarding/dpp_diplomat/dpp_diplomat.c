@@ -87,8 +87,8 @@ process_so_info(oc_so_info_t *new_info)
   }
   int num_notified = oc_notify_observers(res);
   if (num_notified > 0) {
-    PRINT("Notifying %d observers\n", num_notified);
-    PRINT("Freeing so_info_list\n");
+    PRINT("Notified %d observers\n", num_notified);
+    OC_DBG("Freeing so_info_list\n");
     oc_so_info_free(so_info_list);
     so_info_list = NULL;
   }
@@ -150,7 +150,7 @@ int
 main(int argc, char *argv[])
 {
   if (argc < 2) {
-    OC_ERR("Must pass OCF DPP configuration file!");
+    PRINT("Must pass OCF DPP configuration file!");
     return -1;
   }
 
@@ -175,7 +175,7 @@ main(int argc, char *argv[])
 
   /* Hook into hostapd */
   if (dpp_so_init(argv[1]) < 0) {
-    OC_ERR("Failed to connect to hostapd");
+    PRINT("Failed to connect to hostapd");
     return -1;
   }
   PRINT("Connected to hostap socket.\n");

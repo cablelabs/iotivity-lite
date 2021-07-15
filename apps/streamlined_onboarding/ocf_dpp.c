@@ -79,7 +79,7 @@ dpp_so_info_poll(void)
   }
 
   if (!FD_ISSET(fd, &rfds)) {
-    OC_WRN("No data returned from hostap socket");
+    OC_WRN("wpa_ctrl socket failed to become ready");
     return NULL;
   }
 
@@ -112,7 +112,7 @@ dpp_send_so_info(void)
 
   char wpa_command[29 + strlen(self_so_info.uuid) + strlen(self_so_info.cred)];
   sprintf(wpa_command, "DPP_OCF_INFO_ADD uuid=%s cred=%s", self_so_info.uuid, self_so_info.cred);
-  OC_DBG("WPA_CTRL command to send: %s\n", wpa_command);
+  OC_DBG("wpa_ctrl command to send: %s\n", wpa_command);
 
   size_t reply_len = 128;
   char reply_buf[reply_len];
@@ -136,10 +136,10 @@ dpp_so_init(char *config_path)
   }
   ctrl = wpa_ctrl_open(ctrl_iface);
   if (ctrl == NULL) {
-    OC_ERR("Failed to open wpa_supplicant interface");
+    OC_ERR("Failed to open wpa_ctrl interface");
     return -1;
   }
-  OC_DBG("Opened wpa_supplicant control interface");
+  OC_DBG("Opened wpa_ctrl interface");
   return wpa_ctrl_attach(ctrl);
 }
 
