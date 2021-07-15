@@ -10,7 +10,7 @@
 static pthread_mutex_t mutex;
 static pthread_cond_t cv;
 static pthread_t event_loop_thread;
-struct timespec ts;
+static struct timespec ts;
 static oc_resource_t *res = NULL;
 
 static int quit = 0;
@@ -21,9 +21,9 @@ static void
 get_diplomat(oc_request_t *request, oc_interface_mask_t iface_mask, void *user_data)
 {
   (void) user_data;
-  PRINT("get_diplomat called\n");
+  PRINT("GET /diplomat\n");
   if (so_info_list == NULL) {
-    OC_DBG("No updated information to send\n");
+    PRINT("No updated information to send\n");
     oc_send_response(request, OC_STATUS_OK);
     return;
   }
@@ -98,15 +98,13 @@ process_so_info(oc_so_info_t *new_info)
 static void
 poll_for_so_info(void)
 {
-  struct timespec poll_wait = { .tv_sec = 3, .tv_nsec = 0 };
+  PRINT("Polling for SO info events from hostap\n");
   oc_so_info_t *new_info = NULL;
   while (quit != 1) {
     new_info = dpp_so_info_poll();
     if (new_info) {
       process_so_info(new_info);
     }
-    OC_DBG("Sleeping before next poll");
-    nanosleep(&poll_wait, &poll_wait);
   }
 }
 
@@ -180,6 +178,7 @@ main(int argc, char *argv[])
     OC_ERR("Failed to connect to hostapd");
     return -1;
   }
+  PRINT("Connected to hostap socket.\n");
 
   if (pthread_create(&event_loop_thread, NULL, &ocf_event_thread, NULL) != 0) {
     return -1;

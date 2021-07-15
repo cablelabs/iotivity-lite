@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <wpa_ctrl.h>
+#include <errno.h>
 #include "oc_api.h"
 #include "oc_core_res.h"
 #include "oc_streamlined_onboarding.h"
@@ -56,13 +57,31 @@ parse_wpa_event(char *event_buf)
 oc_so_info_t *
 dpp_so_info_poll(void)
 {
-  if (ctrl == NULL)
+  if (ctrl == NULL) {
     return NULL;
+  }
 
   oc_so_info_t *new_info_head = NULL, *cur, *temp;
 
   char event_buf[4096];
   size_t len = -1;
+  fd_set rfds;
+  int fd, res;
+
+  fd = wpa_ctrl_get_fd(ctrl);
+
+  FD_ZERO(&rfds);
+  FD_SET(fd, &rfds);
+  res = select(fd + 1, &rfds, NULL, NULL, NULL);
+  if (res < 0 && errno != EINTR) {
+    OC_ERR("Select failed");
+    return NULL;
+  }
+
+  if (!FD_ISSET(fd, &rfds)) {
+    OC_WRN("No data returned from hostap socket");
+    return NULL;
+  }
 
   while (wpa_ctrl_pending(ctrl)) {
     len = sizeof(event_buf);
