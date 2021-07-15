@@ -2216,7 +2216,9 @@ perform_streamlined_discovery(oc_so_info_t *so_info)
     PRINT("Onboarding device with UUID %s and cred %s\n", so_info->uuid, so_info->cred);
     memcpy(cred, so_info->cred, strlen(so_info->cred));
 
-    sleep(5);
+    struct timespec onboarding_wait = { .tv_sec = 5, .tv_nsec = 0 };
+    OC_DBG("Sleeping for %d seconds before onboarding", onboarding_wait.tv_sec);
+    nanosleep(&onboarding_wait, &onboarding_wait);
 
     oc_obt_discover_unowned_devices(streamlined_onboarding_discovery_cb, so_info->uuid, cred);
     so_info = so_info->next;
