@@ -211,10 +211,11 @@ endif
 
 # DPP-baesd Streamlined Onboarding applications
 SO_DPP_SAMPLES = speaker_server speaker_client dpp_diplomat
-SO_DPP_OBJ = obj/ocf_dpp.o
 ifeq ($(SO_DPP),1)
 	SAMPLES += $(SO_DPP_SAMPLES)
 	SRC += $(addprefix ../../security/,oc_streamlined_onboarding.c oc_obt_otm_streamlined_onboarding.c)
+	SRC_COMMON += $(ROOT_DIR)/apps/streamlined_onboarding/ocf_dpp.c
+	VPATH += $(ROOT_DIR)/apps/streamlined_onboarding
 	EXTRA_CFLAGS += -DOC_SO -DCONFIG_OCF_ONBOARDING
 	LIBS += -lwpa_client
 endif
@@ -453,18 +454,15 @@ client_multithread_linux: libiotivity-lite-client.a $(ROOT_DIR)/apps/client_mult
 	@mkdir -p $@_creds
 	${CC} -o $@ ../../apps/client_multithread_linux.c libiotivity-lite-client.a -DOC_CLIENT ${CFLAGS}  ${LIBS}
 
-$(SO_DPP_OBJ): $(ROOT_DIR)/apps/streamlined_onboarding/ocf_dpp.c
-	${CC} -o $@ -c $^ ${CFLAGS} ${SECURITY_HEADERS} ${LIBS}
-
-speaker_server: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_server.c libiotivity-lite-server.a $(SO_DPP_OBJ)
+speaker_server: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_server.c libiotivity-lite-server.a
 	@mkdir -p $@_creds
 	${CC} -o $@ $^ -DOC_SERVER ${CFLAGS} -I$(ROOT_DIR)/apps/streamlined_onboarding/include/ ${LIBS}
 
-speaker_client: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_client.c libiotivity-lite-client.a $(SO_DPP_OBJ)
+speaker_client: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_client.c libiotivity-lite-client.a
 	@mkdir -p $@_creds
 	${CC} -o $@ $^ -DOC_CLIENT ${CFLAGS} -I$(ROOT_DIR)/apps/streamlined_onboarding/include/ ${LIBS}
 
-dpp_diplomat: $(ROOT_DIR)/apps/streamlined_onboarding/dpp_diplomat/dpp_diplomat.c libiotivity-lite-server.a $(SO_DPP_OBJ)
+dpp_diplomat: $(ROOT_DIR)/apps/streamlined_onboarding/dpp_diplomat/dpp_diplomat.c libiotivity-lite-server.a
 	@mkdir -p $@_creds
 	${CC} -o $@ $^ -DOC_SERVER ${CFLAGS} -I$(ROOT_DIR)/apps/streamlined_onboarding/include/ ${LIBS}
 
