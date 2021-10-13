@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 
 static pthread_mutex_t mutex;
@@ -147,13 +148,8 @@ handle_signal(int signal)
 }
 
 int
-main(int argc, char *argv[])
+main(void)
 {
-  if (argc < 2) {
-    PRINT("Must pass OCF DPP configuration file!");
-    return -1;
-  }
-
   int init;
   struct sigaction sa;
   sigfillset(&sa.sa_mask);
@@ -174,7 +170,7 @@ main(int argc, char *argv[])
     return init;
 
   /* Hook into hostapd */
-  if (dpp_so_init(argv[1]) < 0) {
+  if (dpp_so_init(getenv("SO_IFACE")) < 0) {
     PRINT("Failed to connect to hostapd");
     return -1;
   }

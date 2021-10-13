@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define MAX_URI_LENGTH (30)
 
@@ -213,7 +214,7 @@ display_device_uuid(void)
 }
 
 int
-main(int argc, char *argv[])
+main(void)
 {
   int init;
   struct sigaction sa;
@@ -237,7 +238,7 @@ main(int argc, char *argv[])
   /* Generate streamlined onboarding info if in RFOTM */
   if (oc_so_info_init() == 0) {
     OC_DBG("Generated streamlined onboarding info");
-    if (argc > 1 && (dpp_so_init(argv[1]) < 0 || dpp_send_so_info() < 0)) {
+    if (dpp_so_init(getenv("SO_IFACE")) < 0 || dpp_send_so_info() < 0) {
       OC_ERR("Failed to provide streamlined onboarding information to wpa_supplicant");
     }
   }

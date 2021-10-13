@@ -28,6 +28,7 @@
 #include "ocf_dpp.h"
 #include <signal.h>
 #include <pthread.h>
+#include <stdlib.h>
 
 static pthread_mutex_t mutex;
 static pthread_cond_t cv;
@@ -467,7 +468,7 @@ display_device_uuid(void)
 * shuts down the stack
 */
 int
-main(int argc, char *argv[])
+main(void)
 {
   int init;
   oc_clock_time_t next_event;
@@ -526,7 +527,7 @@ main(int argc, char *argv[])
   /* Generate streamlined onboarding info if in RFOTM */
   if (oc_so_info_init() == 0) {
     OC_DBG("Generated streamlined onboarding info");
-    if (argc > 1 && (dpp_so_init(argv[1]) < 0 || dpp_send_so_info() < 0)) {
+    if (dpp_so_init(getenv("SO_IFACE")) < 0 || dpp_send_so_info() < 0) {
       OC_ERR("Failed to provide streamlined onboarding information to wpa_supplicant");
     }
   }
