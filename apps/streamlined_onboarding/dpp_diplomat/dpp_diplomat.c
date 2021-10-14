@@ -170,7 +170,7 @@ main(void)
     return init;
 
   /* Hook into hostapd */
-  if (dpp_so_init(getenv("SO_IFACE")) < 0) {
+  if (dpp_so_init(getenv("WPA_CTRL_IFACE")) < 0) {
     PRINT("Failed to connect to hostapd");
     return -1;
   }

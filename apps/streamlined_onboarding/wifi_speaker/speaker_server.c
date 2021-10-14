@@ -527,7 +527,7 @@ main(void)
   /* Generate streamlined onboarding info if in RFOTM */
   if (oc_so_info_init() == 0) {
     OC_DBG("Generated streamlined onboarding info");
-    if (dpp_so_init(getenv("SO_IFACE")) < 0 || dpp_send_so_info() < 0) {
+    if (dpp_so_init(getenv("WPA_CTRL_IFACE")) < 0 || dpp_send_so_info() < 0) {
       OC_ERR("Failed to provide streamlined onboarding information to wpa_supplicant");
     }
   }
