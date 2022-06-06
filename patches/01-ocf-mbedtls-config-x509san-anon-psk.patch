@@ -949,7 +949,7 @@ index 0c754b122..a7bc61354 100644
  mbedtls_net_context;
  
 diff --git a/include/mbedtls/ssl.h b/include/mbedtls/ssl.h
-index 072ebbe46..332cf064b 100644
+index 072ebbe46..c829de214 100644
 --- a/include/mbedtls/ssl.h
 +++ b/include/mbedtls/ssl.h
 @@ -581,7 +581,8 @@ union mbedtls_ssl_premaster_secret
@@ -973,12 +973,11 @@ index 072ebbe46..332cf064b 100644
  #if defined(MBEDTLS_X509_TRUSTED_CERTIFICATE_CALLBACK)
      mbedtls_x509_crt_ca_cb_t MBEDTLS_PRIVATE(f_ca_cb);
      void *MBEDTLS_PRIVATE(p_ca_cb);
-@@ -2964,6 +2969,47 @@ void mbedtls_ssl_conf_ca_cb( mbedtls_ssl_config *conf,
+@@ -2964,6 +2969,45 @@ void mbedtls_ssl_conf_ca_cb( mbedtls_ssl_config *conf,
  int mbedtls_ssl_conf_own_cert( mbedtls_ssl_config *conf,
                                mbedtls_x509_crt *own_cert,
                                mbedtls_pk_context *pk_key );
 +
-+#if defined(MBEDTLS_X509_CHECK_EXTENDED_KEY_USAGE)
 +/**
 + * \brief                  Set custom EKU OIDs to be checked on certificates during TLS negotiation,
 + *                         and for selecting suitable certificates for TLS negotation.
@@ -1017,7 +1016,6 @@ index 072ebbe46..332cf064b 100644
 +int mbedtls_ssl_conf_ekus( mbedtls_ssl_config *conf,
 +                           const char *client_oid, size_t client_oid_len,
 +                           const char *server_oid, size_t server_oid_len );
-+#endif /* MBEDTLS_X509_CHECK_EXTENDED_KEY_USAGE */
  #endif /* MBEDTLS_X509_CRT_PARSE_C */
  
  #if defined(MBEDTLS_KEY_EXCHANGE_SOME_PSK_ENABLED)

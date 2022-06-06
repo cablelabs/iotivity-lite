@@ -244,7 +244,7 @@ include(deps/tinycbor.cmake)
 
 if(OC_SECURITY_ENABLED)
     include(deps/mbedtls.cmake)
-    get_target_property(MBEDTLS_INCLUDE_DIRS mbedtls INCLUDE_DIRECTORIES)
+    # get_target_property(MBEDTLS_INCLUDE_DIRS mbedtls INCLUDE_DIRECTORIES)
 endif()
 
 # enable clang-tidy for iotivity targets
@@ -253,26 +253,30 @@ oc_enable_clang_tidy()
 add_library(common-obj OBJECT ${COMMON_SRC})
 target_compile_definitions(common-obj PRIVATE ${PRIVATE_COMPILE_DEFINITIONS} PUBLIC ${PUBLIC_COMPILE_DEFINITIONS})
 target_include_directories(common-obj PRIVATE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/port ${PORT_INCLUDE_DIR})
+# target_link_libraries(common-obj PRIVATE mbedtls)
 
 add_library(client-obj OBJECT ${CLIENT_SRC})
 target_compile_definitions(client-obj PRIVATE ${PRIVATE_COMPILE_DEFINITIONS} PUBLIC ${PUBLIC_COMPILE_DEFINITIONS} "OC_CLIENT")
 target_include_directories(client-obj PRIVATE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/port ${PORT_INCLUDE_DIR})
 if(OC_SECURITY_ENABLED)
-    target_include_directories(client-obj PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+    # target_include_directories(client-obj PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+    target_link_libraries(client-obj PRIVATE mbedtls)
 endif()
 
 add_library(server-obj OBJECT ${SERVER_SRC})
 target_compile_definitions(server-obj PRIVATE ${PRIVATE_COMPILE_DEFINITIONS} PUBLIC ${PUBLIC_COMPILE_DEFINITIONS} "OC_SERVER")
 target_include_directories(server-obj PRIVATE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/port ${PORT_INCLUDE_DIR})
 if(OC_SECURITY_ENABLED)
-    target_include_directories(server-obj PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+    # target_include_directories(server-obj PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+    target_link_libraries(server-obj PRIVATE mbedtls)
 endif()
 
 add_library(client-server-obj OBJECT ${CLIENT_SRC})
 target_compile_definitions(client-server-obj PRIVATE ${PRIVATE_COMPILE_DEFINITIONS} PUBLIC ${PUBLIC_COMPILE_DEFINITIONS} "OC_CLIENT" "OC_SERVER")
 target_include_directories(client-server-obj PRIVATE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/port ${PORT_INCLUDE_DIR})
 if(OC_SECURITY_ENABLED)
-    target_include_directories(client-server-obj PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+    # target_include_directories(client-server-obj PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+    target_link_libraries(client-server-obj PRIVATE mbedtls)
 endif()
 
 if(OC_CLOUD_ENABLED)
@@ -280,7 +284,8 @@ if(OC_CLOUD_ENABLED)
     target_compile_definitions(cloud-obj PRIVATE ${PRIVATE_COMPILE_DEFINITIONS} PUBLIC ${PUBLIC_COMPILE_DEFINITIONS})
     target_include_directories(cloud-obj PRIVATE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/port ${PORT_INCLUDE_DIR})
     if(OC_SECURITY_ENABLED)
-        target_include_directories(cloud-obj PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+        # target_include_directories(cloud-obj PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+        target_link_libraries(cloud-obj PRIVATE mbedtls)
     endif()
 endif()
 
@@ -290,7 +295,8 @@ set_property(TARGET python-obj PROPERTY C_VISIBILITY_PRESET hidden)
 set_property(TARGET python-obj PROPERTY VISIBILITY_INLINES_HIDDEN ON)
 target_include_directories(python-obj PRIVATE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/port ${PORT_INCLUDE_DIR})
 if(OC_SECURITY_ENABLED)
-    target_include_directories(python-obj PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+    # target_include_directories(python-obj PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+    target_link_libraries(python-obj PRIVATE mbedtls)
 endif()
 
 ######## Compose static and shared libraries ########
@@ -301,7 +307,7 @@ set(client-lib-obj
     $<TARGET_OBJECTS:client-obj>
 )
 if(OC_SECURITY_ENABLED)
-    list(APPEND client-lib-obj $<TARGET_OBJECTS:mbedtls>)
+    # list(APPEND client-lib-obj $<TARGET_OBJECTS:mbedtls>)
 endif()
 add_library(client-static STATIC ${client-lib-obj})
 target_link_libraries(client-static PRIVATE ${PRIVATE_LINK_LIBS})
@@ -317,7 +323,8 @@ target_include_directories(client-static PUBLIC
     $<INSTALL_INTERFACE:include/iotivity-lite>
 )
 if(OC_SECURITY_ENABLED)
-    target_include_directories(client-static PUBLIC "$<BUILD_INTERFACE:${MBEDTLS_INCLUDE_DIRS}>")
+    # target_include_directories(client-static PUBLIC "$<BUILD_INTERFACE:${MBEDTLS_INCLUDE_DIRS}>")
+    target_link_libraries(client-static PUBLIC mbedtls)
 endif()
 set_target_properties(client-static PROPERTIES
     OUTPUT_NAME "iotivity-lite-client-static"
@@ -340,7 +347,8 @@ if(NOT MSVC)
         $<INSTALL_INTERFACE:include/iotivity-lite>
     )
     if(OC_SECURITY_ENABLED)
-        target_include_directories(client-shared PUBLIC "$<BUILD_INTERFACE:${MBEDTLS_INCLUDE_DIRS}>")
+        # target_include_directories(client-shared PUBLIC "$<BUILD_INTERFACE:${MBEDTLS_INCLUDE_DIRS}>")
+        target_link_libraries(client-shared PUBLIC mbedtls)
     endif()
     set_target_properties(client-shared PROPERTIES
         OUTPUT_NAME "iotivity-lite-client"
@@ -356,7 +364,7 @@ set(server-lib-obj
     $<TARGET_OBJECTS:server-obj>
 )
 if(OC_SECURITY_ENABLED)
-    list(APPEND server-lib-obj $<TARGET_OBJECTS:mbedtls>)
+    # list(APPEND server-lib-obj $<TARGET_OBJECTS:mbedtls>)
 endif()
 
 add_library(server-static STATIC ${server-lib-obj})
@@ -373,7 +381,8 @@ target_include_directories(server-static PUBLIC
     $<INSTALL_INTERFACE:include/iotivity-lite>
 )
 if(OC_SECURITY_ENABLED)
-    target_include_directories(server-static PUBLIC "$<BUILD_INTERFACE:${MBEDTLS_INCLUDE_DIRS}>")
+    # target_include_directories(server-static PUBLIC "$<BUILD_INTERFACE:${MBEDTLS_INCLUDE_DIRS}>")
+    target_link_libraries(server-static PUBLIC mbedtls)
 endif()
 set_target_properties(server-static PROPERTIES
     OUTPUT_NAME "iotivity-lite-server-static"
@@ -396,7 +405,8 @@ if(NOT MSVC)
         $<INSTALL_INTERFACE:include/iotivity-lite>
     )
     if(OC_SECURITY_ENABLED)
-        target_include_directories(server-shared PUBLIC "$<BUILD_INTERFACE:${MBEDTLS_INCLUDE_DIRS}>")
+        # target_include_directories(server-shared PUBLIC "$<BUILD_INTERFACE:${MBEDTLS_INCLUDE_DIRS}>")
+        target_link_libraries(server-shared PUBLIC mbedtls)
     endif()
     set_target_properties(server-shared PROPERTIES
         OUTPUT_NAME "iotivity-lite-server"
@@ -415,7 +425,7 @@ if(OC_CLOUD_ENABLED)
     list(APPEND client-server-lib-obj $<TARGET_OBJECTS:cloud-obj>)
 endif()
 if(OC_SECURITY_ENABLED)
-    list(APPEND client-server-lib-obj $<TARGET_OBJECTS:mbedtls>)
+    # list(APPEND client-server-lib-obj $<TARGET_OBJECTS:mbedtls>)
 endif()
 add_library(client-server-static STATIC ${client-server-lib-obj})
 target_link_libraries(client-server-static PRIVATE ${PRIVATE_LINK_LIBS})
@@ -431,7 +441,8 @@ target_include_directories(client-server-static PUBLIC
     $<INSTALL_INTERFACE:include/iotivity-lite>
 )
 if(OC_SECURITY_ENABLED)
-    target_include_directories(client-server-static PUBLIC "$<BUILD_INTERFACE:${MBEDTLS_INCLUDE_DIRS}>")
+    # target_include_directories(client-server-static PUBLIC "$<BUILD_INTERFACE:${MBEDTLS_INCLUDE_DIRS}>")
+    target_link_libraries(client-server-static PUBLIC mbedtls)
 endif()
 if(OC_CLOUD_ENABLED)
     target_include_directories(client-server-static PUBLIC $<BUILD_INTERFACE:${CLOUD_INCLUDE_DIR}>)
@@ -457,7 +468,8 @@ if(NOT MSVC)
         $<INSTALL_INTERFACE:include/iotivity-lite>
     )
     if(OC_SECURITY_ENABLED)
-        target_include_directories(client-server-shared PUBLIC "$<BUILD_INTERFACE:${MBEDTLS_INCLUDE_DIRS}>")
+        # target_include_directories(client-server-shared PUBLIC "$<BUILD_INTERFACE:${MBEDTLS_INCLUDE_DIRS}>")
+        target_link_libraries(client-server-shared PUBLIC mbedtls)
     endif()
     if(OC_CLOUD_ENABLED)
         target_include_directories(client-server-shared PUBLIC $<BUILD_INTERFACE:${CLOUD_INCLUDE_DIR}>)
@@ -477,7 +489,7 @@ set(client-python-lib-obj
     $<TARGET_OBJECTS:python-obj>
 )
 if(OC_SECURITY_ENABLED)
-    list(APPEND client-python-lib-obj $<TARGET_OBJECTS:mbedtls>)
+    # list(APPEND client-python-lib-obj $<TARGET_OBJECTS:mbedtls>)
 endif()
 add_library(client-python-shared SHARED ${client-python-lib-obj})
 target_link_libraries(client-python-shared PRIVATE ${PRIVATE_LINK_LIBS})
@@ -490,7 +502,8 @@ target_include_directories(client-python-shared PUBLIC
     $<INSTALL_INTERFACE:include/iotivity-lite>
 )
 if(OC_SECURITY_ENABLED)
-    target_include_directories(client-python-shared PUBLIC "$<BUILD_INTERFACE:${MBEDTLS_INCLUDE_DIRS}>")
+    # target_include_directories(client-python-shared PUBLIC "$<BUILD_INTERFACE:${MBEDTLS_INCLUDE_DIRS}>")
+    target_link_libraries(client-python-shared PUBLIC mbedtls)
 endif()
 set_target_properties(client-python-shared PROPERTIES
     OUTPUT_NAME "iotivity-lite-client-python"
@@ -537,8 +550,9 @@ if(BUILD_TESTING AND (UNIX OR MINGW))
         if(OC_SECURITY_ENABLED)
             target_include_directories(${TESTNAME} PRIVATE
                 ${PROJECT_SOURCE_DIR}/security
-                ${PROJECT_SOURCE_DIR}/deps/mbedtls/include
+                # ${PROJECT_SOURCE_DIR}/deps/mbedtls/include
             )
+            list(APPEND TEST_LINK_LIBS mbedtls)
         endif()
         if(OC_CLOUD_ENABLED)
             target_include_directories(${TESTNAME} PRIVATE ${PROJECT_SOURCE_DIR}/api/cloud)
