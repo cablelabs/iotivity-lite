@@ -191,7 +191,7 @@ jobs:
         endif()
 
         execute_process(
-          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/ctest --verbose
+          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/ctest --verbose --tests-regex "apitest|platformtest|messagingtest|securitytest"
           RESULT_VARIABLE result
         )
         if (NOT result EQUAL 0)

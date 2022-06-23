@@ -55,4 +55,4 @@ jobs:
       - name: test
         run: |
           cd linuxbuild
-          ctest --verbose
+          ctest --verbose --tests-regex "apitest|platformtest|messagingtest|securitytest"
