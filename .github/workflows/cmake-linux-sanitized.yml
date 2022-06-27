@@ -45,4 +45,4 @@ jobs:
       - name: Test
         run: |
           cd linuxbuild
-          ctest --verbose --tests-regex "apitest|platformtest|messagingtest|securitytest"
+          ctest --verbose --label-regex "oc-unittest"

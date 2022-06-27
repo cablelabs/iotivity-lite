@@ -572,6 +572,7 @@ if(BUILD_TESTING AND(UNIX OR MINGW))
         target_link_libraries(${TESTNAME} PRIVATE ${TEST_LINK_LIBS})
         add_test(NAME ${TESTNAME} COMMAND ${TESTNAME})
         set_target_properties(${TESTNAME} PROPERTIES FOLDER unittests)
+        set_tests_properties(${TESTNAME} PROPERTIES LABELS oc-unittest)
     endmacro()
 
     # Unit tests
