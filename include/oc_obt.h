@@ -210,7 +210,7 @@ void oc_obt_shutdown(void);
  *   - `0` on success
  *   - `-1` on failure
  */
-int oc_obt_discover_unowned_devices(oc_obt_discovery_cb_t cb, void *data);
+int oc_obt_discover_unowned_devices(oc_obt_discovery_cb_t cb, char *deviceuuid, void *data);
 
 /**
  * Discover all unowned devices using the realm-local address scope
@@ -233,7 +233,7 @@ int oc_obt_discover_unowned_devices(oc_obt_discovery_cb_t cb, void *data);
  *   - `0` on success
  *   - `-1` on failure
  */
-int oc_obt_discover_unowned_devices_realm_local_ipv6(oc_obt_discovery_cb_t cb,
+int oc_obt_discover_unowned_devices_realm_local_ipv6(oc_obt_discovery_cb_t cb, char *deviceuuid,
                                                      void *data);
 
 /**
@@ -257,7 +257,7 @@ int oc_obt_discover_unowned_devices_realm_local_ipv6(oc_obt_discovery_cb_t cb,
  *   - `0` on success
  *   - `-1` on failure
  */
-int oc_obt_discover_unowned_devices_site_local_ipv6(oc_obt_discovery_cb_t cb,
+int oc_obt_discover_unowned_devices_site_local_ipv6(oc_obt_discovery_cb_t cb, char *deviceuuid,
                                                     void *data);
 
 /**
@@ -517,6 +517,11 @@ int oc_obt_request_random_pin(oc_uuid_t *uuid, oc_obt_device_status_cb_t cb,
 int oc_obt_perform_random_pin_otm(oc_uuid_t *uuid, const unsigned char *pin,
                                   size_t pin_len, oc_obt_device_status_cb_t cb,
                                   void *data);
+
+#ifdef OC_SO
+int oc_obt_perform_streamlined_otm(oc_uuid_t *uuid, const unsigned char *psk,
+    size_t psk_len, oc_obt_device_status_cb_t cb, void *data);
+#endif /* OC_SO */
 
 /**
  * Perform ownership transfer method (OTM) using Manufacturer Certificate
