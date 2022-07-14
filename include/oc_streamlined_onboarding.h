@@ -3,6 +3,8 @@
 
 #define OC_SO_MAX_CRED_LEN (128)
 
+#include "oc_api.h"
+
 typedef struct oc_so_info_t {
   char uuid[OC_UUID_LEN];
   char cred[OC_SO_MAX_CRED_LEN];
