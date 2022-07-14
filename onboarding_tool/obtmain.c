@@ -398,7 +398,7 @@ discover_unowned_device_by_uuid(void)
   PRINT("Enter Device UUID: ");
   SCANF("%s", uuid_buf);
   otb_mutex_lock(app_sync_lock);
-  oc_obt_discover_unowned_devices(unowned_device_cb, uuid_buf, NULL);
+  oc_obt_discover_unowned_devices_filtered(unowned_device_cb, uuid_buf, NULL);
   otb_mutex_unlock(app_sync_lock);
   signal_event_loop();
 }
@@ -2208,7 +2208,7 @@ perform_streamlined_discovery(oc_so_info_t *so_info)
     OC_DBG("Sleeping for %d seconds before onboarding", onboarding_wait.tv_sec);
     nanosleep(&onboarding_wait, &onboarding_wait);
 
-    oc_obt_discover_unowned_devices(streamlined_onboarding_discovery_cb, so_info->uuid, cred);
+    oc_obt_discover_unowned_devices_filtered(streamlined_onboarding_discovery_cb, so_info->uuid, cred);
     so_info = so_info->next;
   }
   oc_so_info_free(so_info);

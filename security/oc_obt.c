@@ -630,7 +630,7 @@ obt_check_owned(oc_client_response_t *data)
 
 /* Unowned device discovery */
 static int
-discover_unowned_devices(uint8_t scope, oc_obt_discovery_cb_t cb, char *deviceuuid, void *data)
+discover_unowned_devices(uint8_t scope, oc_obt_discovery_cb_t cb, char *additional_query, void *data)
 {
   oc_discovery_cb_t *c = (oc_discovery_cb_t *)oc_memb_alloc(&oc_discovery_s);
   if (!c) {
@@ -639,67 +639,83 @@ discover_unowned_devices(uint8_t scope, oc_obt_discovery_cb_t cb, char *deviceuu
   c->cb = cb;
   c->data = data;
 
-  char doxm_endpoint[] = "/oic/sec/doxm";
-  char discovery_query[60] = "owned=FALSE";
+  char *doxm_endpoint = "/oic/sec/doxm";
 
-#ifdef OC_DOXM_UUID_FILTER
-  if (deviceuuid && strlen(deviceuuid) > 0) {
-    char uuid_query[49];
-    snprintf(uuid_query, 49, "&deviceuuid=%s", deviceuuid);
-    strncat(discovery_query, uuid_query, strlen(uuid_query));
+  char *owned_query = "owned=FALSE";
+  char *discovery_query = owned_query;
+  if (additional_query && strlen(additional_query) > 0) {
+    int discovery_query_len = 12 + strlen(additional_query);
+    discovery_query = malloc((discovery_query_len + 1) * sizeof(char));
+    snprintf(discovery_query, discovery_query_len, "%s%s", owned_query, additional_query);
+    PRINT("discovery_query: %s\n", discovery_query);
   }
-#else
-  (void)deviceuuid;
-#endif /* OC_DOXM_UUID_FILTER */
   OC_DBG("Query parameter string for discovery: %s\n", discovery_query);
 
+  int retval = -1;
   if (scope == 0x02) {
     if (oc_do_ip_multicast(doxm_endpoint, discovery_query, &obt_check_owned,
                            c)) {
       oc_list_add(oc_discovery_cbs, c);
       oc_set_delayed_callback(c, free_discovery_cb, DISCOVERY_CB_PERIOD);
-      return 0;
+      retval = 0;
     }
   } else if (scope == 0x03) {
     if (oc_do_realm_local_ipv6_multicast(doxm_endpoint, discovery_query,
                                          &obt_check_owned, c)) {
       oc_list_add(oc_discovery_cbs, c);
       oc_set_delayed_callback(c, free_discovery_cb, DISCOVERY_CB_PERIOD);
-      return 0;
+      retval = 0;
     }
   } else if (scope == 0x05) {
     if (oc_do_site_local_ipv6_multicast(doxm_endpoint, discovery_query,
                                         &obt_check_owned, c)) {
       oc_list_add(oc_discovery_cbs, c);
       oc_set_delayed_callback(c, free_discovery_cb, DISCOVERY_CB_PERIOD);
-      return 0;
+      retval = 0;
     }
   }
 
-  oc_memb_free(&oc_discovery_s, c);
-  return -1;
+  if (additional_query && strlen(additional_query) > 0 && discovery_query) {
+    free(discovery_query);
+  }
+  if (retval != 0)
+    oc_memb_free(&oc_discovery_s, c);
+  return retval;
 }
 
 int
 oc_obt_discover_unowned_devices_realm_local_ipv6(oc_obt_discovery_cb_t cb,
-                                                 char *deviceuuid, void *data)
+                                                 char *additional_query, void *data)
 {
-  return discover_unowned_devices(0x03, cb, deviceuuid, data);
+  return discover_unowned_devices(0x03, cb, additional_query, data);
 }
 
 int
 oc_obt_discover_unowned_devices_site_local_ipv6(oc_obt_discovery_cb_t cb,
-                                                char *deviceuuid, void *data)
+                                                char *additional_query, void *data)
 {
-  return discover_unowned_devices(0x05, cb, deviceuuid, data);
+  return discover_unowned_devices(0x05, cb, additional_query, data);
 }
 
 int
-oc_obt_discover_unowned_devices(oc_obt_discovery_cb_t cb, char *deviceuuid,
+oc_obt_discover_unowned_devices(oc_obt_discovery_cb_t cb, char *additional_query,
                                 void *data)
 {
-  return discover_unowned_devices(0x02, cb, deviceuuid, data);
+  return discover_unowned_devices(0x02, cb, additional_query, data);
 }
+
+/* UUID-Filtered device discovery */
+#ifdef OC_DOXM_UUID_FILTER
+int
+oc_obt_discover_unowned_devices_filtered(oc_obt_discovery_cb_t cb, char *deviceuuid, void *data)
+{
+  char uuid_query[49];
+  if (deviceuuid && strlen(deviceuuid) > 0) {
+    snprintf(uuid_query, 49, "&deviceuuid=%s", deviceuuid);
+  }
+  return oc_obt_discover_unowned_devices(cb, uuid_query, data);
+}
+#endif /* OC_DOXM_UUID_FILTER */
 
 /* Owned device disvoery */
 static int

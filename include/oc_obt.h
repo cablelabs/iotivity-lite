@@ -200,6 +200,11 @@ void oc_obt_shutdown(void);
  *
  * @param[in] cb the oc_obt_discovery_cb_t that will be called for each
  *               discovered device
+ *
+ * @param[in] additional_query any additional query parameters to be appended
+ *                             to the 'owned=FALSE' query parmeter. Additional
+ *                             parameters are expected to be prefixed by &.
+ *
  * @param[in] data context pointer that is passed to the oc_obt_discovery_cb_t
  *                 the pointer must be a valid pointer till after oc_main_init()
  *                 call completes. The context pointer must be valid for
@@ -210,7 +215,7 @@ void oc_obt_shutdown(void);
  *   - `0` on success
  *   - `-1` on failure
  */
-int oc_obt_discover_unowned_devices(oc_obt_discovery_cb_t cb, char *deviceuuid, void *data);
+int oc_obt_discover_unowned_devices(oc_obt_discovery_cb_t cb, char *additional_query, void *data);
 
 /**
  * Discover all unowned devices using the realm-local address scope
@@ -223,6 +228,11 @@ int oc_obt_discover_unowned_devices(oc_obt_discovery_cb_t cb, char *deviceuuid, 
  *
  * @param[in] cb the oc_obt_discovery_cb_t that will be called for each
  *               discovered device
+ *
+ * @param[in] additional_query any additional query parameters to be appended
+ *                             to the 'owned=FALSE' query parmeter. Additional
+ *                             parameters are expected to be prefixed by &.
+ *
  * @param[in] data context pointer that is passed to the oc_obt_discovery_cb_t
  *                 the pointer must be a valid pointer till after oc_main_init()
  *                 call completes. The context pointer must be valid for
@@ -233,7 +243,7 @@ int oc_obt_discover_unowned_devices(oc_obt_discovery_cb_t cb, char *deviceuuid, 
  *   - `0` on success
  *   - `-1` on failure
  */
-int oc_obt_discover_unowned_devices_realm_local_ipv6(oc_obt_discovery_cb_t cb, char *deviceuuid,
+int oc_obt_discover_unowned_devices_realm_local_ipv6(oc_obt_discovery_cb_t cb, char *additional_query,
                                                      void *data);
 
 /**
@@ -247,6 +257,11 @@ int oc_obt_discover_unowned_devices_realm_local_ipv6(oc_obt_discovery_cb_t cb, c
  *
  * @param[in] cb the oc_obt_discovery_cb_t that will be called for each
  *               discovered device
+ *
+ * @param[in] additional_query any additional query parameters to be appended
+ *                             to the 'owned=FALSE' query parmeter. Additional
+ *                             parameters are expected to be prefixed by &.
+ *
  * @param[in] data context pointer that is passed to the oc_obt_discovery_cb_t
  *                 the pointer must be a valid pointer till after oc_main_init()
  *                 call completes. The context pointer must be valid for
@@ -257,8 +272,39 @@ int oc_obt_discover_unowned_devices_realm_local_ipv6(oc_obt_discovery_cb_t cb, c
  *   - `0` on success
  *   - `-1` on failure
  */
-int oc_obt_discover_unowned_devices_site_local_ipv6(oc_obt_discovery_cb_t cb, char *deviceuuid,
+int oc_obt_discover_unowned_devices_site_local_ipv6(oc_obt_discovery_cb_t cb, char *additional_query,
                                                     void *data);
+
+#ifdef OC_DOXM_UUID_FILTER
+/**
+ * Discover all unowned devices, filtered by Device UUID.
+ *
+ * The discovery request will make a muli-cast request to the IPv6 link-local
+ * multicast address scope and over IPv4.
+ *
+ * Multicast discovery over IPv4 will only happen if the stack is built with
+ * the OC_IPV4 build flag.
+ *
+ * The multicast discovery request will use both the owned and deviceuuid query
+ * parameters, the latter of which will be populated with the provided UUID.
+ *
+ * Read RFC4291 and RFC7346 for more information about IPv6 Reference Scopes.
+ *
+ * @param[in] cb the oc_obt_discovery_cb_t that will be called for each
+ *               discovered device
+ * @param[in] deviceuuid the uuid of the Device to be discovered
+ * @param[in] data context pointer that is passed to the oc_obt_discovery_cb_t
+ *                 the pointer must be a valid pointer till after oc_main_init()
+ *                 call completes. The context pointer must be valid for
+ *                 DISCOVERY_CB_PERIOD seconds after the
+ *                 oc_obt_discover_unowned_devices function returns.
+ *
+ * @return
+ *   - `0` on success
+ *   - `-1` on failure
+ */
+int oc_obt_discover_unowned_devices_filtered(oc_obt_discovery_cb_t cb, char *deviceuuid, void *data);
+#endif /* OC_DOXM_UUID_FILTER */
 
 /**
  * Discover all devices owned by the onboarding tool
