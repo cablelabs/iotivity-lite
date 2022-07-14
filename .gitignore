@@ -107,6 +107,9 @@ port/linux/speaker_client_creds
 port/linux/dpp_diplomat_creds
 port/linux/cli_diplomat_creds
 
+#pki artifacts
+/port/linux/pki_certs
+
 #service
 service/cloud-access/unittest/obj
 service/resource-directory/client/unittest/obj
