@@ -50,6 +50,7 @@ port/linux/smart_lock
 port/linux/speaker_server
 port/linux/speaker_client
 port/linux/dpp_diplomat
+port/linux/cli_diplomat
 port/windows/vs2015/.vs/
 port/windows/vs2015/Debug/
 port/windows/vs2015/Release/
@@ -104,6 +105,7 @@ port/linux/client_multithread_linux_creds
 port/linux/speaker_server_creds
 port/linux/speaker_client_creds
 port/linux/dpp_diplomat_creds
+port/linux/cli_diplomat_creds
 
 #service
 service/cloud-access/unittest/obj

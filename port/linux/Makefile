@@ -234,6 +234,7 @@ ifeq ($(OICRES_OBSERVABLE),1)
 	EXTRA_CFLAGS += -DOC_DISCOVERY_RESOURCE_OBSERVABLE
 endif
 
+# ### Streamlined Onboarding ###
 # DPP-baesd Streamlined Onboarding applications
 SO_DPP_SAMPLES = speaker_server speaker_client dpp_diplomat
 ifeq ($(SO_DPP),1)
@@ -245,6 +246,16 @@ ifeq ($(SO_DPP),1)
 	LIBS += -lwpa_client
 endif
 
+# CLI-based Streamlined Onboarding applications
+SO_CLI_SAMPLES = cli_diplomat
+ifeq ($(SO_CLI),1)
+	SAMPLES += $(SO_CLI_SAMPLES)
+	SRC += $(addprefix ../../security/,oc_streamlined_onboarding.c oc_obt_otm_streamlined_onboarding.c)
+	VPATH += $(ROOT_DIR)/apps/streamlined_onboarding
+	EXTRA_CFLAGS += -DOC_SO
+endif
+
+# Cross compilation to target arm-based architectures
 ifeq ($(CROSS),1)
 	export CC = arm-linux-gnueabihf-gcc
 endif
@@ -500,6 +511,8 @@ client_multithread_linux: libiotivity-lite-client.a $(ROOT_DIR)/apps/client_mult
 	@mkdir -p $@_creds
 	${CC} -o $@ ../../apps/client_multithread_linux.c libiotivity-lite-client.a -DOC_CLIENT ${CFLAGS}  ${LIBS}
 
+# Streamlined Onboarding Examples
+# DPP based
 speaker_server: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_server.c libiotivity-lite-server.a
 	@mkdir -p $@_creds
 	${CC} -o $@ $^ -DOC_SERVER ${CFLAGS} -I$(ROOT_DIR)/apps/streamlined_onboarding/include/ ${LIBS}
@@ -511,6 +524,10 @@ speaker_client: $(ROOT_DIR)/apps/streamlined_onboarding/wifi_speaker/speaker_cli
 dpp_diplomat: $(ROOT_DIR)/apps/streamlined_onboarding/dpp_diplomat/dpp_diplomat.c libiotivity-lite-server.a
 	@mkdir -p $@_creds
 	${CC} -o $@ $^ -DOC_SERVER ${CFLAGS} -I$(ROOT_DIR)/apps/streamlined_onboarding/include/ ${LIBS}
+
+cli_diplomat: $(ROOT_DIR)/apps/streamlined_onboarding/so_cli/cli_diplomat.c libiotivity-lite-server.a
+	@mkdir -p $@_creds
+	${CC} -o $@ $^ -DOC_SERVER ${CFLAGS} ${LIBS}
 
 iotivity-lite-server.pc: iotivity-lite-server.pc.in
 	$(SED) > $@ < $< \
