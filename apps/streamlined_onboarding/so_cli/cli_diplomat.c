@@ -16,7 +16,19 @@ static void
 poll_for_so_info(void)
 {
   OC_DBG("Polling for Streamlined Onboarding info via CLI\n");
-  // TODO: cli stuff here
+  while (quit != 1) {
+    PRINT("Enter Base64-encoded Streamlined Onboarding information: ");
+    char *info_input = NULL;
+    int input_len;
+    if (scanf("%ms%n", &info_input, &input_len) < 1) {
+      OC_ERR("Failed to read input\n");
+      continue;
+    }
+    OC_DBG("Read %d characters\n", input_len);
+    OC_DBG("Read input: %s\n", info_input);
+    if (info_input)
+      free(info_input);
+  }
 }
 
 static void
