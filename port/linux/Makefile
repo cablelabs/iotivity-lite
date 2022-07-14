@@ -242,7 +242,7 @@ ifeq ($(SO_DPP),1)
 	SRC += $(addprefix ../../security/,oc_streamlined_onboarding.c oc_obt_otm_streamlined_onboarding.c)
 	SRC_COMMON += $(ROOT_DIR)/apps/streamlined_onboarding/ocf_dpp.c
 	VPATH += $(ROOT_DIR)/apps/streamlined_onboarding
-	EXTRA_CFLAGS += -DOC_SO -DCONFIG_OCF_ONBOARDING
+	EXTRA_CFLAGS += -DOC_SO -DCONFIG_OCF_ONBOARDING -DOC_DOXM_UUID_FILTER
 	LIBS += -lwpa_client
 endif
 
@@ -252,7 +252,7 @@ ifeq ($(SO_CLI),1)
 	SAMPLES += $(SO_CLI_SAMPLES)
 	SRC += $(addprefix ../../security/,oc_streamlined_onboarding.c oc_obt_otm_streamlined_onboarding.c)
 	VPATH += $(ROOT_DIR)/apps/streamlined_onboarding
-	EXTRA_CFLAGS += -DOC_SO
+	EXTRA_CFLAGS += -DOC_SO -DOC_DOXM_UUID_FILTER
 endif
 
 # Cross compilation to target arm-based architectures
