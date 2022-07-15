@@ -1,8 +1,28 @@
 #include "oc_api.h"
 #include "oc_streamlined_onboarding.h"
 #include "oc_diplomat.h"
+#include "oc_base64.h"
 
 oc_so_info_t *so_info_list;
+
+void
+oc_diplomat_process_encoded_so_info(char *new_so_info)
+{
+  int buf_len = oc_base64_decode((uint8_t *)new_so_info, strlen(new_so_info));
+  OC_DBG("Buf len is %d\nBuffer is %s\n", buf_len, new_so_info);
+  if (buf_len < 0) {
+    OC_ERR("Failed to decode new SO info\n");
+    return;
+  }
+
+#ifdef OC_DYNAMIC_ALLOCATION
+  oc_rep_new_realloc((uint8_t **)&new_so_info, buf_len, OC_MAX_APP_DATA_SIZE);
+#else  /* OC_DYNAMIC_ALLOCATION */
+  oc_rep_new(new_so_info, buf_len);
+#endif /* !OC_DYNAMIC_ALLOCATION */
+  oc_rep_encode_raw((uint8_t *)new_so_info, buf_len);
+  PRINT("Size: %d\n", oc_rep_get_encoded_payload_size());
+}
 
 void
 oc_diplomat_get(oc_request_t *request, oc_interface_mask_t iface_mask, void *user_data)

@@ -26,6 +26,7 @@ poll_for_so_info(void)
     }
     OC_DBG("Read %d characters\n", input_len);
     OC_DBG("Read input: %s\n", info_input);
+    oc_diplomat_process_encoded_so_info(info_input);
     if (info_input)
       free(info_input);
   }
