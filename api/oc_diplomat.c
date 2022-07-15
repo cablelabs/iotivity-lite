@@ -15,13 +15,27 @@ oc_diplomat_process_encoded_so_info(char *new_so_info)
     return;
   }
 
-#ifdef OC_DYNAMIC_ALLOCATION
-  oc_rep_new_realloc((uint8_t **)&new_so_info, buf_len, OC_MAX_APP_DATA_SIZE);
-#else  /* OC_DYNAMIC_ALLOCATION */
-  oc_rep_new(new_so_info, buf_len);
-#endif /* !OC_DYNAMIC_ALLOCATION */
-  oc_rep_encode_raw((uint8_t *)new_so_info, buf_len);
-  PRINT("Size: %d\n", oc_rep_get_encoded_payload_size());
+  oc_rep_t *rep = NULL;
+  struct oc_memb rep_objects = { sizeof(oc_rep_t), 0, 0, 0, 0 };
+  oc_rep_set_pool(&rep_objects);
+  int err = oc_parse_rep((uint8_t *)new_so_info, buf_len, &rep);
+  if (err != 0) {
+    OC_ERR("Failed to parse new SO info\n");
+    return;
+  }
+
+#ifdef OC_DEBUG
+  char * json;
+  size_t json_size;
+  json_size = oc_rep_to_json(rep, NULL, 0, true);
+  json = (char *)malloc(json_size + 1);
+  oc_rep_to_json(rep, json, json_size + 1, true);
+  OC_DBG("Decoded SO info:\n%s\n", json);
+  free(json);
+#endif /* OC_DEBUG */
+
+  if (rep)
+    oc_free_rep(rep);
 }
 
 void
@@ -30,7 +44,7 @@ oc_diplomat_get(oc_request_t *request, oc_interface_mask_t iface_mask, void *use
   (void) user_data;
   OC_DBG("GET /diplomat\n");
   if (so_info_list == NULL) {
-    PRINT("No updated information to send\n");
+    OC_DBG("No updated information to send\n");
     oc_send_response(request, OC_STATUS_OK);
     return;
   }
