@@ -956,50 +956,59 @@ dump_cred(void *data)
 }
 
 // TODO: Parse a single credential rep and populate out_cred with its contents
-bool
-oc_sec_parse_single_cred(oc_rep_t *cred, oc_cred_t *out_cred)
+oc_sec_cred_parse_ctx_t *
+oc_sec_parse_single_cred(oc_rep_t *cred, bool from_storage, bool *got_oscore_ctx)
 {
-  int credid = -1;
-  oc_sec_credtype_t credtype = 0;
-  char *role = NULL, *authority = NULL, *subjectuuid = NULL,
-       *privatedata = NULL;
-  oc_sec_encoding_t privatedatatype = 0;
-  size_t privatedata_size = 0;
+  size_t len = 0;
+
+  oc_sec_cred_parse_ctx_t *parsed_cred = (oc_sec_cred_parse_ctx_t *)calloc(1, sizeof(oc_sec_cred_parse_ctx_t));
+
+  parsed_cred->credid = -1;
+  /*
+  parsed_cred->credtype = 0;
+  parsed_cred->role = NULL;
+  parsed_cred->authority = NULL;
+  parsed_cred->subjectuuid = NULL;
+  parsed_cred->privatedata = NULL;
+  parsed_cred->privatedatatype = 0;
+  parsed_cred->privatedata_size = 0;
 #ifdef OC_PKI
-  oc_sec_credusage_t credusage = 0;
-  char *publicdata = NULL;
-  oc_sec_encoding_t publicdatatype = 0;
-  size_t publicdata_size = 0;
-#endif /* OC_PKI */
+  parsed_cred->credusage = 0;
+  parsed_cred->publicdata = NULL;
+  parsed_cred->publicdatatype = 0;
+  parsed_cred->publicdata_size = 0;
+#endif OC_PKI
 #ifdef OC_OSCORE
-  const char *sid = NULL, *rid = NULL, *desc = NULL;
-  uint64_t ssn = 0;
-#endif /* OC_OSCORE */
-  bool owner_cred = false;
-  bool non_empty = false;
+  parsed_cred->sid = NULL;
+  parsed_cred->rid = NULL;
+  parsed_cred->desc = NULL;
+  parsed_cred->ssn = 0;
+#endif OC_OSCORE
+  parsed_cred->owner_cred = false;
+  */
+
   while (cred != NULL) {
-    non_empty = true;
     len = oc_string_len(cred->name);
     switch (cred->type) {
     /* credid and credtype  */
     case OC_REP_INT:
       if (len == 6 && memcmp(oc_string(cred->name), "credid", 6) == 0) {
-        credid = (int)cred->value.integer;
+        parsed_cred->credid = (int)cred->value.integer;
       } else if (len == 8 &&
                  memcmp(oc_string(cred->name), "credtype", 8) == 0) {
-        credtype = cred->value.integer;
+        parsed_cred->credtype = cred->value.integer;
       }
       break;
     /* subjectuuid and credusage */
     case OC_REP_STRING:
       if (len == 11 &&
           memcmp(oc_string(cred->name), "subjectuuid", 11) == 0) {
-        subjectuuid = oc_string(cred->value.string);
+        parsed_cred->subjectuuid = oc_string(cred->value.string);
       }
 #ifdef OC_PKI
       else if (len == 9 &&
                memcmp(oc_string(cred->name), "credusage", 9) == 0) {
-        credusage = oc_cred_parse_credusage(&cred->value.string);
+        parsed_cred->credusage = oc_cred_parse_credusage(&cred->value.string);
       }
 #endif /* OC_PKI */
       break;
@@ -1017,15 +1026,15 @@ oc_sec_parse_single_cred(oc_rep_t *cred, oc_cred_t *out_cred)
         char **pubpriv = 0;
         oc_sec_encoding_t *encoding = 0;
         if (len == 11) {
-          size = &privatedata_size;
-          pubpriv = &privatedata;
-          encoding = &privatedatatype;
+          size = &parsed_cred->privatedata_size;
+          pubpriv = &parsed_cred->privatedata;
+          encoding = &parsed_cred->privatedatatype;
         }
 #ifdef OC_PKI
         else {
-          size = &publicdata_size;
-          pubpriv = &publicdata;
-          encoding = &publicdatatype;
+          size = &parsed_cred->publicdata_size;
+          pubpriv = &parsed_cred->publicdata;
+          encoding = &parsed_cred->publicdatatype;
         }
 #endif /* OC_PKI */
         while (data != NULL) {
@@ -1069,10 +1078,10 @@ oc_sec_parse_single_cred(oc_rep_t *cred, oc_cred_t *out_cred)
           len = oc_string_len(data->name);
           if (len == 4 &&
               memcmp(oc_string(data->name), "role", 4) == 0) {
-            role = oc_string(data->value.string);
+            parsed_cred->role = oc_string(data->value.string);
           } else if (len == 9 && memcmp(oc_string(data->name),
                                         "authority", 9) == 0) {
-            authority = oc_string(data->value.string);
+            parsed_cred->authority = oc_string(data->value.string);
           }
           data = data->next;
         }
@@ -1081,7 +1090,7 @@ oc_sec_parse_single_cred(oc_rep_t *cred, oc_cred_t *out_cred)
       /* oscore configuration */
       else if (len == 6 &&
                memcmp(oc_string(cred->name), "oscore", 6) == 0) {
-        got_oscore_ctx = true;
+        *got_oscore_ctx = true;
         /* senderid, recipientid, ssn, desc */
         while (data != NULL) {
           len = oc_string_len(data->name);
@@ -1093,7 +1102,7 @@ oc_sec_parse_single_cred(oc_rep_t *cred, oc_cred_t *out_cred)
               OC_ERR("oc_cred: invalid oscore/senderid");
               return false;
             }
-            sid = oc_string(data->value.string);
+            parsed_cred->sid = oc_string(data->value.string);
           } else if (data->type == OC_REP_STRING && len == 11 &&
                      memcmp(oc_string(data->name), "recipientid", 11) ==
                        0) {
@@ -1103,17 +1112,17 @@ oc_sec_parse_single_cred(oc_rep_t *cred, oc_cred_t *out_cred)
               OC_ERR("oc_cred: invalid oscore/senderid");
               return false;
             }
-            rid = oc_string(data->value.string);
+            parsed_cred->rid = oc_string(data->value.string);
           } else if (data->type == OC_REP_STRING && len == 4 &&
                      memcmp(oc_string(data->name), "desc", 4) == 0) {
-            desc = oc_string(data->value.string);
+            parsed_cred->desc = oc_string(data->value.string);
           } else if (data->type == OC_REP_INT && len == 3 &&
                      memcmp(oc_string(data->name), "ssn", 3) == 0) {
             if (!from_storage) {
               OC_ERR("oc_cred: oscore/ssn is R-only");
               return false;
             }
-            ssn = data->value.integer;
+            parsed_cred->ssn = data->value.integer;
           } else {
             OC_ERR("oc_cred: unexpected property/value type in oscore "
                    "config");
@@ -1127,7 +1136,7 @@ oc_sec_parse_single_cred(oc_rep_t *cred, oc_cred_t *out_cred)
     case OC_REP_BOOL:
       if (len == 10 &&
           memcmp(oc_string(cred->name), "owner_cred", 10) == 0) {
-        owner_cred = cred->value.boolean;
+        parsed_cred->owner_cred = cred->value.boolean;
       }
       break;
     default:
@@ -1136,48 +1145,42 @@ oc_sec_parse_single_cred(oc_rep_t *cred, oc_cred_t *out_cred)
     cred = cred->next;
   }
 
-  out_cred->credid = credid;
-  out_cred->credtype = credtype;
-  oc_str_to_uuid(subjectuuid, out_cred->subjectuuid);
-  out_cred->credusage = credusage;
-  out_cred->
-
 #ifdef OC_OSCORE
-  if (credtype == OC_CREDTYPE_OSCORE &&
-      (!sid || !rid || privatedata_size != OSCORE_MASTER_SECRET_LEN ||
-       desc)) {
+  if (parsed_cred->credtype == OC_CREDTYPE_OSCORE &&
+      (!parsed_cred->sid || !parsed_cred->rid || parsed_cred->privatedata_size != OSCORE_MASTER_SECRET_LEN ||
+       parsed_cred->desc)) {
     OC_ERR("oc_cred: invalid oscore credential..rejecting");
     return false;
   }
-  if (credtype == OC_CREDTYPE_OSCORE_MCAST_CLIENT &&
-      (!sid || rid || privatedata_size != OSCORE_MASTER_SECRET_LEN)) {
+  if (parsed_cred->credtype == OC_CREDTYPE_OSCORE_MCAST_CLIENT &&
+      (!parsed_cred->sid || parsed_cred->rid || parsed_cred->privatedata_size != OSCORE_MASTER_SECRET_LEN)) {
     OC_ERR("oc_cred: invalid oscore credential..rejecting");
     return false;
   }
-  if (credtype == OC_CREDTYPE_OSCORE_MCAST_SERVER &&
-      (!rid || sid || privatedata_size != OSCORE_MASTER_SECRET_LEN)) {
+  if (parsed_cred->credtype == OC_CREDTYPE_OSCORE_MCAST_SERVER &&
+      (!parsed_cred->rid || parsed_cred->sid || parsed_cred->privatedata_size != OSCORE_MASTER_SECRET_LEN)) {
     OC_ERR("oc_cred: invalid oscore credential..rejecting");
     return false;
   }
 #endif /* OC_OSCORE */
+  return parsed_cred;
 }
 
-oc_cred_t *
-oc_sec_parse_creds_array(oc_rep_t *creds_array)
+oc_sec_cred_parse_ctx_t *
+oc_sec_parse_creds_array(oc_rep_t *creds_array, bool from_storage, bool *got_oscore_ctx)
 {
   /*
    * for each credential in cred:
-   *   alloc new oc_cred_t
+   *   alloc new oc_sec_cred_t
    *   parse rep and populate current
    * return head of list
    */
-  oc_cred_t *parsed_creds_head = NULL;
-  oc_cred_t *cur = parsed_creds_head;
+  oc_sec_cred_parse_ctx_t *parsed_creds_head = NULL;
+  oc_sec_cred_parse_ctx_t *cur = parsed_creds_head;
   while (creds_array != NULL) {
-    oc_cred_t *new_cred = (oc_cred_t *)calloc(1, sizeof(oc_cred_t));
     oc_rep_t *cred = creds_array->value.object;
     // TODO: Parse single; returns bool
-    oc_sec_parse_single_cred(cred, new_cred);
+    oc_sec_cred_parse_ctx_t *new_cred = oc_sec_parse_single_cred(cred, from_storage, got_oscore_ctx);
 
     if (parsed_creds_head == NULL) {
       parsed_creds_head = new_cred;
@@ -1186,8 +1189,9 @@ oc_sec_parse_creds_array(oc_rep_t *creds_array)
     }
     cur->next = new_cred;
     cur = cur->next;
+    creds_array = creds_array->next;
   }
-  return parsed_creds;
+  return parsed_creds_head;
 }
 
 bool
@@ -1241,56 +1245,51 @@ oc_sec_decode_cred(oc_rep_t *rep, oc_sec_cred_t **owner, bool from_storage,
       if (len == 5 && (memcmp(oc_string(rep->name), "creds", 5) == 0 ||
                        memcmp(oc_string(rep->name), "roles", 5) == 0)) {
         oc_rep_t *creds_array = rep->value.object_array;
-        /* array of oic.sec.cred */
-        // TODO: Call to parse out all credentials in array, then add new creds from their contents
-        oc_cred_t *parsed_creds = oc_sec_parse_creds_array(creds_array);
-        oc_cred_t *cur = parsed_creds;
+        oc_sec_cred_parse_ctx_t *parsed_creds = oc_sec_parse_creds_array(creds_array, from_storage, &got_oscore_ctx);
+        oc_sec_cred_parse_ctx_t *cur = parsed_creds;
 
         while (cur != NULL) {
-          // TODO: Invocation below's parameters should be pulled from parsed_cred
-          if (non_empty) {
-            credid = oc_sec_add_new_cred(
-              device, roles_resource, client, credid, credtype,
+          int credid = oc_sec_add_new_cred(
+            device, roles_resource, client, cur->credid, cur->credtype,
 #ifdef OC_PKI
-              credusage,
+            cur->credusage,
 #else  /* OC_PKI */
-              0,
+            0,
 #endif /* !OC_PKI */
-              subjectuuid, privatedatatype, privatedata_size,
-              (const uint8_t *)privatedata,
+            cur->subjectuuid, cur->privatedatatype, cur->privatedata_size,
+            (const uint8_t *)cur->privatedata,
 #ifdef OC_PKI
-              publicdatatype, publicdata_size, (const uint8_t *)publicdata,
+            cur->publicdatatype, cur->publicdata_size, (const uint8_t *)cur->publicdata,
 #else  /* OC_PKI */
-              0, 0, NULL,
+            0, 0, NULL,
 #endif /* !OC_PKI */
-              role, authority);
+            cur->role, cur->authority);
 
-            if (credid == -1) {
-              return false;
-            }
+          if (credid == -1) {
+            return false;
+          }
 
-            oc_sec_cred_t *cr = oc_sec_get_cred_by_credid(credid, device);
-            if (cr) {
+          oc_sec_cred_t *cr = oc_sec_get_cred_by_credid(credid, device);
+          if (cr) {
 #ifdef OC_OSCORE
-              if (sid || rid) {
-                oc_oscore_context_t *oscore_ctx = oc_oscore_add_context(
-                  device, sid, rid, ssn, desc, cr, from_storage);
-                if (!oscore_ctx) {
-                  return false;
-                }
+            if (cur->sid || cur->rid) {
+              oc_oscore_context_t *oscore_ctx = oc_oscore_add_context(
+                device, cur->sid, cur->rid, cur->ssn, cur->desc, cr, from_storage);
+              if (!oscore_ctx) {
+                return false;
+              }
 
-                cr->oscore_ctx = oscore_ctx;
-              }
+              cr->oscore_ctx = oscore_ctx;
+            }
 #endif /* OC_OSCORE */
-              cr->owner_cred = owner_cred;
-              /* Obtain a handle to the owner credential entry where that
-               * applies
-               */
-              if (credtype == OC_CREDTYPE_PSK && privatedata_size == 0 &&
-                  owner) {
-                *owner = cr;
-                (*owner)->owner_cred = true;
-              }
+            cr->owner_cred = cur->owner_cred;
+            /* Obtain a handle to the owner credential entry where that
+             * applies
+             */
+            if (cr->credtype == OC_CREDTYPE_PSK && cur->privatedata_size == 0 &&
+                owner) {
+              *owner = cr;
+              (*owner)->owner_cred = true;
             }
           }
           cur = cur->next;
