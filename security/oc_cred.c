@@ -955,37 +955,49 @@ dump_cred(void *data)
   return OC_EVENT_DONE;
 }
 
-// TODO: Parse a single credential rep and populate out_cred with its contents
+static oc_sec_cred_parse_ctx_t *
+alloc_cred_parse_ctx(void)
+{
+  oc_sec_cred_parse_ctx_t *new_cred = (oc_sec_cred_parse_ctx_t *)calloc(1, sizeof(oc_sec_cred_parse_ctx_t));
+
+  new_cred->credid = -1;
+  new_cred->role = NULL;
+  new_cred->authority = NULL;
+  new_cred->subjectuuid = NULL;
+  new_cred->privatedata = NULL;
+#ifdef OC_PKI
+  new_cred->publicdata = NULL;
+#endif /* OC_PKI */
+#ifdef OC_OSCORE
+  new_cred->sid = NULL;
+  new_cred->rid = NULL;
+  new_cred->desc = NULL;
+#endif /* OC_OSCORE */
+
+  /*
+  new_cred->credtype = 0;
+  new_cred->privatedatatype = 0;
+  new_cred->privatedata_size = 0;
+  new_cred->owner_cred = false;
+#ifdef OC_PKI
+  new_cred->credusage = 0;
+  new_cred->publicdatatype = 0;
+  new_cred->publicdata_size = 0;
+#endif
+#ifdef OC_OSCORE
+  new_cred->ssn = 0;
+#endif OC_OSCORE
+  */
+
+  return new_cred;
+}
+
 oc_sec_cred_parse_ctx_t *
 oc_sec_parse_single_cred(oc_rep_t *cred, bool from_storage, bool *got_oscore_ctx)
 {
   size_t len = 0;
-
-  oc_sec_cred_parse_ctx_t *parsed_cred = (oc_sec_cred_parse_ctx_t *)calloc(1, sizeof(oc_sec_cred_parse_ctx_t));
-
-  parsed_cred->credid = -1;
-  /*
-  parsed_cred->credtype = 0;
-  parsed_cred->role = NULL;
-  parsed_cred->authority = NULL;
-  parsed_cred->subjectuuid = NULL;
-  parsed_cred->privatedata = NULL;
-  parsed_cred->privatedatatype = 0;
-  parsed_cred->privatedata_size = 0;
-#ifdef OC_PKI
-  parsed_cred->credusage = 0;
-  parsed_cred->publicdata = NULL;
-  parsed_cred->publicdatatype = 0;
-  parsed_cred->publicdata_size = 0;
-#endif OC_PKI
-#ifdef OC_OSCORE
-  parsed_cred->sid = NULL;
-  parsed_cred->rid = NULL;
-  parsed_cred->desc = NULL;
-  parsed_cred->ssn = 0;
-#endif OC_OSCORE
-  parsed_cred->owner_cred = false;
-  */
+  size_t value_len = 0;
+  oc_sec_cred_parse_ctx_t *parsed_cred = alloc_cred_parse_ctx();
 
   while (cred != NULL) {
     len = oc_string_len(cred->name);
@@ -1001,9 +1013,12 @@ oc_sec_parse_single_cred(oc_rep_t *cred, bool from_storage, bool *got_oscore_ctx
       break;
     /* subjectuuid and credusage */
     case OC_REP_STRING:
+      value_len = oc_string_len(cred->value.string);
       if (len == 11 &&
           memcmp(oc_string(cred->name), "subjectuuid", 11) == 0) {
-        parsed_cred->subjectuuid = oc_string(cred->value.string);
+        parsed_cred->subjectuuid = (char *)malloc(value_len + 1);
+        memcpy(parsed_cred->subjectuuid, oc_string(cred->value.string), value_len);
+        parsed_cred->subjectuuid[value_len] = '\0';
       }
 #ifdef OC_PKI
       else if (len == 9 &&
@@ -1049,8 +1064,10 @@ oc_sec_parse_single_cred(oc_rep_t *cred, bool from_storage, bool *got_oscore_ctx
               }
             } else if (oc_string_len(data->name) == 4 &&
                        memcmp(oc_string(data->name), "data", 4) == 0) {
-              *pubpriv = oc_string(data->value.string);
               *size = oc_string_len(data->value.string);
+              *pubpriv = (char *)malloc(*size + 1);
+              memcpy(*pubpriv, oc_string(data->value.string), *size);
+              (*pubpriv)[*size] = '\0';
               if (*size == 0) {
                 goto next_item;
               }
@@ -1059,8 +1076,11 @@ oc_sec_parse_single_cred(oc_rep_t *cred, bool from_storage, bool *got_oscore_ctx
           case OC_REP_BYTE_STRING: {
             if (oc_string_len(data->name) == 4 &&
                 memcmp(oc_string(data->name), "data", 4) == 0) {
-              *pubpriv = oc_string(data->value.string);
+
               *size = oc_string_len(data->value.string);
+              *pubpriv = (char *)malloc(*size + 1);
+              memcpy(*pubpriv, oc_string(data->value.string), *size);
+              (*pubpriv)[*size] = '\0';
               if (*size == 0) {
                 goto next_item;
               }
@@ -1076,12 +1096,17 @@ oc_sec_parse_single_cred(oc_rep_t *cred, bool from_storage, bool *got_oscore_ctx
                  memcmp(oc_string(cred->name), "roleid", 6) == 0) {
         while (data != NULL) {
           len = oc_string_len(data->name);
+          value_len = oc_string_len(data->value.string);
           if (len == 4 &&
               memcmp(oc_string(data->name), "role", 4) == 0) {
-            parsed_cred->role = oc_string(data->value.string);
+            parsed_cred->role = (char *)malloc(value_len + 1);
+            memcpy(parsed_cred->role, oc_string(data->value.string), value_len);
+            parsed_cred->role[value_len] = '\0';
           } else if (len == 9 && memcmp(oc_string(data->name),
                                         "authority", 9) == 0) {
-            parsed_cred->authority = oc_string(data->value.string);
+            parsed_cred->authority = (char *)malloc(value_len + 1);
+            memcpy(parsed_cred->authority, oc_string(data->value.string), value_len);
+            parsed_cred->authority[value_len] = '\0';
           }
           data = data->next;
         }
@@ -1094,6 +1119,7 @@ oc_sec_parse_single_cred(oc_rep_t *cred, bool from_storage, bool *got_oscore_ctx
         /* senderid, recipientid, ssn, desc */
         while (data != NULL) {
           len = oc_string_len(data->name);
+          value_len = oc_string_len(data->value.string);
           if (data->type == OC_REP_STRING && len == 8 &&
               memcmp(oc_string(data->name), "senderid", 8) == 0) {
             if (!is_valid_oscore_id(
@@ -1102,7 +1128,9 @@ oc_sec_parse_single_cred(oc_rep_t *cred, bool from_storage, bool *got_oscore_ctx
               OC_ERR("oc_cred: invalid oscore/senderid");
               return false;
             }
-            parsed_cred->sid = oc_string(data->value.string);
+            parsed_cred->sid = (char *)malloc(value_len + 1);
+            memcpy(parsed_cred->sid, oc_string(data->value.string), value_len);
+            parsed_cred->sid[value_len] = '\0';
           } else if (data->type == OC_REP_STRING && len == 11 &&
                      memcmp(oc_string(data->name), "recipientid", 11) ==
                        0) {
@@ -1112,10 +1140,14 @@ oc_sec_parse_single_cred(oc_rep_t *cred, bool from_storage, bool *got_oscore_ctx
               OC_ERR("oc_cred: invalid oscore/senderid");
               return false;
             }
-            parsed_cred->rid = oc_string(data->value.string);
+            parsed_cred->rid = (char *)malloc(value_len + 1);
+            memcpy(parsed_cred->rid, oc_string(data->value.string), value_len);
+            parsed_cred->rid[value_len] = '\0';
           } else if (data->type == OC_REP_STRING && len == 4 &&
                      memcmp(oc_string(data->name), "desc", 4) == 0) {
-            parsed_cred->desc = oc_string(data->value.string);
+            parsed_cred->desc = (char *)malloc(value_len + 1);
+            memcpy(parsed_cred->desc, oc_string(data->value.string), value_len);
+            parsed_cred->desc[value_len] = '\0';
           } else if (data->type == OC_REP_INT && len == 3 &&
                      memcmp(oc_string(data->name), "ssn", 3) == 0) {
             if (!from_storage) {
@@ -1179,8 +1211,11 @@ oc_sec_parse_creds_array(oc_rep_t *creds_array, bool from_storage, bool *got_osc
   oc_sec_cred_parse_ctx_t *cur = parsed_creds_head;
   while (creds_array != NULL) {
     oc_rep_t *cred = creds_array->value.object;
-    // TODO: Parse single; returns bool
+
     oc_sec_cred_parse_ctx_t *new_cred = oc_sec_parse_single_cred(cred, from_storage, got_oscore_ctx);
+    if (new_cred == NULL) {
+      goto next_parse_cred;
+    }
 
     if (parsed_creds_head == NULL) {
       parsed_creds_head = new_cred;
@@ -1189,6 +1224,8 @@ oc_sec_parse_creds_array(oc_rep_t *creds_array, bool from_storage, bool *got_osc
     }
     cur->next = new_cred;
     cur = cur->next;
+
+next_parse_cred:
     creds_array = creds_array->next;
   }
   return parsed_creds_head;
