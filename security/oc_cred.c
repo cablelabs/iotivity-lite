@@ -1256,10 +1256,11 @@ oc_sec_parse_creds_array(oc_rep_t *creds_array, bool from_storage, bool *got_osc
     if (parsed_creds_head == NULL) {
       parsed_creds_head = new_cred;
       cur = parsed_creds_head;
-      continue;
     }
-    cur->next = new_cred;
-    cur = cur->next;
+    else {
+      cur->next = new_cred;
+      cur = cur->next;
+    }
 
 next_parse_cred:
     creds_array = creds_array->next;
