@@ -1023,7 +1023,7 @@ alloc_cred_parse_ctx(void)
   return new_cred;
 }
 
-oc_sec_cred_parse_ctx_t *
+static oc_sec_cred_parse_ctx_t *
 oc_sec_parse_single_cred(oc_rep_t *cred, bool from_storage, bool *got_oscore_ctx)
 {
   size_t len = 0;

@@ -68,6 +68,7 @@ void oc_sec_cred_init(void);
 void oc_sec_cred_free(void);
 void oc_sec_encode_cred(bool persist, size_t device,
                         oc_interface_mask_t iface_mask, bool to_storage);
+oc_sec_cred_parse_ctx_t *oc_sec_parse_creds_array(oc_rep_t *creds_array, bool from_storage, bool *got_oscore_ctx);
 bool oc_sec_decode_cred(oc_rep_t *rep, oc_sec_cred_t **owner, bool from_storage,
                         bool roles_resource, struct oc_tls_peer_t *client,
                         size_t device);
