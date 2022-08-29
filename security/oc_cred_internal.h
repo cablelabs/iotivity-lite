@@ -27,6 +27,31 @@ extern "C" {
 #endif
 
 struct oc_tls_peer_t;
+typedef struct oc_sec_cred_parse_ctx_t
+{
+  struct oc_sec_cred_parse_ctx_t *next;
+  int credid;
+  oc_sec_credtype_t credtype;
+  char *role;
+  char *authority;
+  char *subjectuuid;
+  char *privatedata;
+  oc_sec_encoding_t privatedatatype;
+  size_t privatedata_size;
+#ifdef OC_PKI
+  oc_sec_credusage_t credusage;
+  char *publicdata;
+  oc_sec_encoding_t publicdatatype;
+  size_t publicdata_size;
+#endif /* OC_PKI */
+#ifdef OC_OSCORE
+  char *sid;
+  char *rid;
+  char *desc;
+  uint64_t ssn;
+#endif /* OC_OSCORE */
+  bool owner_cred;
+} oc_sec_cred_parse_ctx_t;
 
 int oc_sec_add_new_cred(size_t device, bool roles_resource,
                         struct oc_tls_peer_t *client, int credid,
@@ -43,6 +68,7 @@ void oc_sec_cred_init(void);
 void oc_sec_cred_free(void);
 void oc_sec_encode_cred(bool persist, size_t device,
                         oc_interface_mask_t iface_mask, bool to_storage);
+oc_sec_cred_parse_ctx_t *oc_sec_parse_creds_array(oc_rep_t *creds_array, bool from_storage, bool *got_oscore_ctx);
 bool oc_sec_decode_cred(oc_rep_t *rep, oc_sec_cred_t **owner, bool from_storage,
                         bool roles_resource, struct oc_tls_peer_t *client,
                         size_t device);
